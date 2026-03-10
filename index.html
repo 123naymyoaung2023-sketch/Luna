@@ -2,21 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <!-- Tablet နှင့် ဖုန်းများအတွက် Full Screen နှင့် Zoom ပိတ်ခြင်း -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   
+  <!-- Add to Home Screen ပြုလုပ်ပါက Native App ကဲ့သို့ Full Screen ဖြစ်စေရန် -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#f9fafb">
   
-  <title>Luna POS - Moonlight Theme</title>
+  <title>Nay N Nay POS</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <!-- React & ReactDOM -->
+  <!-- React & ReactDOM (UMD Global) -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   
@@ -25,53 +28,35 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
-  <!-- Babel -->
+  <!-- Babel for parsing JSX -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
-    /* Moonlight Theme Background */
+    /* App ကဲ့သို့ ဖြစ်စေရန်နှင့် Scrollbar လှပစေရန် */
     body { 
       -webkit-tap-highlight-color: transparent; 
-      overscroll-behavior-y: none; 
+      overscroll-behavior-y: none; /* အောက်သို့ဆွဲချပါက Refresh ဖြစ်ခြင်းကို ပိတ်ထားသည် */
       user-select: none;
       -webkit-user-select: none;
+      background-color: #f9fafb; /* Light Gray / Off-white Background */
       margin: 0;
       padding: 0;
-      overflow: hidden; 
-      background-color: #0f172a;
-      /* လရောင်ဖြာကျနေသည့်ပုံစံ (Radial Gradient) */
-      background-image: radial-gradient(circle at 80% -10%, #38bdf8 0%, #1e3a8a 40%, #0f172a 80%, #020617 100%);
-      background-attachment: fixed;
-      color: #f8fafc;
+      overflow: hidden; /* အပြင်ဘောင် ကြီးမရွေ့စေရန် */
+      touch-action: manipulation; /* မြန်မြန်ဆန်ဆန် နှိပ်နိုင်ရန် */
     }
     input, textarea, select {
       user-select: text;
       -webkit-user-select: text;
+      font-size: 16px !important; /* iOS zoom မဖြစ်စေရန် */
     }
-    /* Select Options inside dark theme */
-    option {
-      background-color: #1e293b;
-      color: #ffffff;
-    }
-    
-    /* Scrollbar Style for dark theme */
+    /* Scrollbar အနက်ရောင်/အမွဲရောင် ဒီဇိုင်း */
     .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(56, 189, 248, 0.3); border-radius: 20px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: rgba(56, 189, 248, 0.6); }
-
-    /* Content Area Padding to clear bottom nav */
-    .content-area {
-      padding-bottom: calc(100px + env(safe-area-inset-bottom));
-    }
-    @media (min-width: 768px) {
-      .content-area {
-        padding-bottom: 40px;
-      }
-    }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 20px; }
+    .custom-scrollbar:hover::-webkit-scrollbar-thumb { background-color: #9ca3af; }
   </style>
 </head>
-<body>
+<body class="text-gray-900">
   <div id="root"></div>
 
   <script type="text/babel">
@@ -88,160 +73,182 @@
       measurementId: "G-R3SYVK6PS2"
     };
 
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
     const auth = firebase.auth();
     const db = firebase.firestore();
-    const APP_ID = typeof window.__app_id !== 'undefined' ? window.__app_id : 'luna-pos';
 
-    // --- Luna Glassmorphism Styles ---
+    const rawAppId = typeof window.__app_id !== 'undefined' ? window.__app_id : null;
+    const APP_ID = (rawAppId && rawAppId !== "null") ? String(rawAppId) : 'nay-n-nay-pos';
+
+    // --- UI Design Constants (White & Black High Contrast Theme) ---
     const styles = {
-      neoCard: "bg-white/10 backdrop-blur-md rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] border border-white/20 overflow-hidden text-white",
-      neoInput: "w-full bg-slate-900/50 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-all text-white placeholder-blue-200/50 font-bold border border-white/10 shadow-inner",
-      neoBtn: "bg-white/10 hover:bg-white/20 rounded-2xl p-4 font-bold transition-all flex items-center justify-center gap-2 border border-white/20 text-white shadow-sm disabled:opacity-50",
-      neoBtnPrimary: "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-2xl p-4 font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-[0_0_15px_rgba(6,182,212,0.5)] border border-cyan-400/50",
-      headerText: "text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 to-blue-200 drop-shadow-[0_0_10px_rgba(165,243,252,0.5)]",
+      neoCard: "bg-white rounded-2xl shadow-sm border border-gray-200",
+      neoInput: "w-full bg-gray-50 rounded-xl border-2 border-transparent focus:border-black p-4 focus:outline-none transition-all text-black font-medium placeholder-gray-400 touch-manipulation",
+      neoBtn: "bg-white rounded-xl border border-gray-300 p-3 font-bold text-black transition-all active:bg-gray-100 flex items-center justify-center gap-2 disabled:opacity-50 touch-manipulation hover:border-gray-400",
+      neoBtnPrimary: "bg-black text-white rounded-xl shadow-md p-3 font-bold transition-all active:scale-[0.98] active:bg-gray-800 flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-gray-800 touch-manipulation",
+      headerText: "text-2xl font-black text-black tracking-tight",
     };
 
     const dict = {
       my: {
-        system: "စနစ်", purchase: "ဝယ်ယူမှု", sale: "ရောင်းချမှု", preorder: "Pre-Order",
+        system: "စနစ်", purchase: "ဝယ်ယူမှု", sale: "ရောင်းချမှု", 
         customer: "ဖောက်သည်", expense: "အသုံးစရိတ်", report: "အစီရင်ခံစာ",
         login: "အကောင့်ဝင်ရန်", signup: "အကောင့်သစ်ဖွင့်ရန်", email: "အီးမေးလ်", password: "စကားဝှက်",
-        guestLogin: "Guest အဖြစ်ဝင်ရန်", logout: "ထွက်မည်", langSwitch: "English",
-        add: "အသစ်ထည့်မည်", save: "သိမ်းမည်", cancel: "မလုပ်တော့ပါ", delete: "ဖျက်မည်", edit: "ပြင်မည်",
+        guestLogin: "Guest (အကောင့်မပါဘဲ) ဝင်မည်", logout: "ထွက်မည်", langSwitch: "English သို့ပြောင်းရန်",
+        add: "အသစ်ထည့်မည်", save: "သိမ်းမည်", cancel: "မလုပ်တော့ပါ", edit: "ပြင်မည်", delete: "ဖျက်မည်",
         search: "ရှာဖွေရန်...", name: "အမည်", cost: "အရင်း", price: "ရောင်းဈေး", qty: "အရေအတွက်", 
         expDate: "သက်တမ်းကုန်ရက်", total: "စုစုပေါင်း", paid: "ငွေချေပြီး", unpaid: "ငွေမချေရသေး",
         serviceFee: "ဝန်ဆောင်ခ", payAmount: "ပေးချေငွေ", balance: "လက်ကျန်ငွေ",
+        age: "အသက်", gender: "ကျား/မ", phone: "ဖုန်းနံပါတ်", diagnosis: "ရောဂါ/မှတ်ချက်",
         daily: "နေ့စဉ်", weekly: "အပတ်စဉ်", monthly: "လစဉ်", yearly: "နှစ်စဉ်", grandTotal: "စုစုပေါင်း အသားတင်",
         bestSelling: "အရောင်းရဆုံး ပစ္စည်းများ", inventory: "လက်ကျန် ပစ္စည်းတန်ဖိုး",
-        deductProfit: "အမြတ်ထဲမှ နုတ်မည်"
+        deductProfit: "အမြတ်ထဲမှ နုတ်မည်", date: "ရက်စွဲ", selectCustomer: "ဖောက်သည်ရွေးပါ",
+        addToCart: "ခြင်းထဲထည့်မည်", payBalance: "လက်ကျန်ငွေရှင်းမည်",
+        details: "မှတ်တမ်းကြည့်မည်", salesHistory: "ဝယ်ယူမှု မှတ်တမ်းများ", payNow: "ငွေချေမည်", paymentAmount: "ပေးသွင်းငွေ ပမာဏ"
       },
       en: {
-        system: "System", purchase: "Purchase", sale: "Sale", preorder: "Pre-Order",
+        system: "System", purchase: "Purchase", sale: "Sale", 
         customer: "Customer", expense: "Expense", report: "Report",
-        login: "Login", signup: "Sign Up", email: "Email", password: "Password",
-        guestLogin: "Login as Guest", logout: "Log Out", langSwitch: "မြန်မာစာ",
-        add: "Add New", save: "Save", cancel: "Cancel", delete: "Delete", edit: "Edit",
+        login: "Log In", signup: "Sign Up", email: "Email", password: "Password",
+        guestLogin: "Login as Guest", logout: "Log Out", langSwitch: "မြန်မာစာသို့ပြောင်းရန်",
+        add: "Add New", save: "Save", cancel: "Cancel", edit: "Edit", delete: "Delete",
         search: "Search...", name: "Name", cost: "Cost", price: "Price", qty: "Quantity", 
         expDate: "Expiry Date", total: "Total", paid: "Paid", unpaid: "Unpaid",
         serviceFee: "Service Fee", payAmount: "Pay Amount", balance: "Balance",
+        age: "Age", gender: "Gender", phone: "Phone", diagnosis: "Diagnosis",
         daily: "Daily", weekly: "Weekly", monthly: "Monthly", yearly: "Yearly", grandTotal: "Grand Total",
         bestSelling: "Best Selling", inventory: "Inventory Asset",
-        deductProfit: "Deduct from Profit"
+        deductProfit: "Deduct from Profit", date: "Date", selectCustomer: "Select Customer",
+        addToCart: "Add to Cart", payBalance: "Pay Balance",
+        details: "View Details", salesHistory: "Detailed Sales History", payNow: "Pay Now", paymentAmount: "Payment Amount"
       }
     };
 
     // ==========================================
-    // AUTH SCREEN
+    // SUB-COMPONENTS
     // ==========================================
-    const AuthScreen = ({ showAlert }) => {
+    const AuthScreen = ({ handleAuth, handleGuest, t, lang, setLang }) => {
       const [isLogin, setIsLogin] = useState(true);
       const [email, setEmail] = useState('');
       const [password, setPassword] = useState('');
-      const [loading, setLoading] = useState(false);
-
-      const handleSubmit = async (e) => {
-        e.preventDefault(); setLoading(true);
-        try {
-          if (isLogin) await auth.signInWithEmailAndPassword(email, password);
-          else await auth.createUserWithEmailAndPassword(email, password);
-        } catch (error) { 
-          showAlert(error.message); 
-        } finally { setLoading(false); }
-      };
-
       return (
-        <div className="h-[100dvh] w-full flex items-center justify-center p-4">
-          <div className={`${styles.neoCard} p-8 w-full max-w-md animate-in fade-in zoom-in`}>
-            <div className="text-center mb-8"><h1 className={styles.headerText}>Luna POS</h1><p className="mt-2 text-sm font-bold text-cyan-100/70">{isLogin ? "အကောင့်ဝင်ပါ" : "အကောင့်သစ်ဖွင့်ပါ"}</p></div>
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <input type="email" placeholder="Email" required className={styles.neoInput} value={email} onChange={e=>setEmail(e.target.value)} />
-              <input type="password" placeholder="Password" required className={styles.neoInput} value={password} onChange={e=>setPassword(e.target.value)} />
-              <button type="submit" disabled={loading} className={`${styles.neoBtnPrimary} w-full h-14`}>{loading ? <i className="fas fa-spinner fa-spin"></i> : (isLogin ? "အကောင့်ဝင်မည်" : "အကောင့်ဖွင့်မည်")}</button>
+        <div className="bg-gray-50 h-[100dvh] w-full flex items-center justify-center p-4">
+          <div className={`${styles.neoCard} p-8 w-full max-w-md shadow-lg border-gray-200`}>
+            <div className="flex justify-between items-center mb-8">
+              <h1 className="text-3xl font-black text-black">Nay N Nay<br/>POS</h1>
+              <button onClick={() => setLang(lang === 'my' ? 'en' : 'my')} className="text-xs text-black font-bold bg-gray-100 border border-gray-300 px-3 py-1 rounded-full">{t.langSwitch}</button>
+            </div>
+            <form onSubmit={(e) => handleAuth(e, isLogin, email, password)} className="space-y-6">
+              <div><input type="email" placeholder={t.email} required className={styles.neoInput} value={email} onChange={e=>setEmail(e.target.value)} /></div>
+              <div><input type="password" placeholder={t.password} required className={styles.neoInput} value={password} onChange={e=>setPassword(e.target.value)} /></div>
+              <button type="submit" className={`${styles.neoBtnPrimary} w-full text-lg py-4`}>{isLogin ? t.login : t.signup}</button>
             </form>
             <div className="mt-6 flex flex-col gap-4 text-center">
-              <button onClick={() => setIsLogin(!isLogin)} className="text-cyan-400 font-bold hover:underline">{isLogin ? "အကောင့်သစ်ဖွင့်မည်" : "အကောင့်ရှိပြီးသားဖြစ်သည်"}</button>
-              <div className="flex items-center gap-2"><hr className="flex-1 border-white/20" /><span className="text-xs text-white/50 font-bold">OR</span><hr className="flex-1 border-white/20" /></div>
-              <button onClick={()=>auth.signInAnonymously()} disabled={loading} className={`${styles.neoBtn} w-full h-12 text-white`}><i className="fas fa-user-secret"></i> Guest အဖြစ်ဝင်မည်</button>
+              <button onClick={() => setIsLogin(!isLogin)} className="text-black font-bold hover:underline">{isLogin ? t.signup : t.login}</button>
+              <div className="flex items-center gap-2"><hr className="flex-1 border-gray-300" /><span className="text-sm text-gray-400 font-bold">OR</span><hr className="flex-1 border-gray-300" /></div>
+              <button onClick={handleGuest} className={`${styles.neoBtn} w-full text-black`}><i className="fas fa-user-plus text-xl"></i> {t.guestLogin}</button>
             </div>
           </div>
         </div>
       );
     };
 
-    // ==========================================
-    // SYSTEM TAB
-    // ==========================================
-    const SystemTab = ({ user, showAlert }) => (
-      <div className="space-y-6 animate-in fade-in">
-        <h2 className={styles.headerText}>စနစ် (System)</h2>
-        <div className={`${styles.neoCard} p-6 space-y-6`}>
-          <div className="flex items-center gap-4 border-b border-white/10 pb-4">
-            <div className="w-16 h-16 bg-cyan-500/20 border border-cyan-400/50 rounded-full flex items-center justify-center text-cyan-300 text-2xl font-black shadow-[0_0_15px_rgba(34,211,238,0.3)]">{user.isAnonymous ? "G" : (user.email ? user.email.charAt(0).toUpperCase() : "U")}</div>
-            <div><p className="font-black text-lg text-white">{user.isAnonymous ? "Guest Account" : user.email}</p><p className="text-xs text-cyan-100/50 font-bold">User ID: {user.uid}</p></div>
+    const SystemTab = ({ user, t, lang, setLang }) => (
+      <div className="space-y-6">
+        <h2 className={styles.headerText}>{t.system}</h2>
+        <div className={`${styles.neoCard} p-6 space-y-4`}>
+          <p className="font-bold text-lg text-black">Logged in as: <span className="font-normal">{user.isAnonymous ? "Guest User" : user.email}</span></p>
+          <hr className="border-gray-200 my-4" />
+          <div className="flex flex-col md:flex-row gap-4">
+            <button onClick={() => auth.signOut()} className={`${styles.neoBtn} text-red-600 border-red-200 hover:bg-red-50 w-full md:w-auto px-6`}><i className="fas fa-sign-out-alt text-xl"></i> {t.logout}</button>
+            <button onClick={() => setLang(lang === 'my' ? 'en' : 'my')} className={`${styles.neoBtn} w-full md:w-auto px-6`}><i className="fas fa-globe text-xl"></i> {t.langSwitch}</button>
           </div>
-          <button onClick={() => auth.signOut().catch(e=>showAlert(e.message))} className={`${styles.neoBtn} text-rose-400 hover:text-rose-300 hover:bg-rose-500/20 border-rose-500/30 md:w-48`}><i className="fas fa-sign-out-alt"></i> ထွက်မည် (Log Out)</button>
         </div>
       </div>
     );
 
-    // ==========================================
-    // PURCHASE TAB
-    // ==========================================
-    const PurchaseTab = ({ products, userId, showAlert, showConfirm }) => {
+    const PurchaseTab = ({ t, products, userId, showAlert, showConfirm }) => {
       const [search, setSearch] = useState('');
       const [showForm, setShowForm] = useState(false);
       const [form, setForm] = useState({ id: null, name: '', cost: '', price: '', qty: '', expDate: '' });
 
-      const sortedProducts = useMemo(() => products.filter(p => (p.name || '').toLowerCase().includes(search.toLowerCase())).sort((a, b) => (a.name || '').localeCompare(b.name || '')), [products, search]);
+      const sortedProducts = useMemo(() => {
+        return [...products].filter(p => (p.name || '').toLowerCase().includes(search.toLowerCase())).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      }, [products, search]);
 
       const handleSubmit = async (e) => {
         e.preventDefault();
         try {
           const data = { name: form.name, cost: Number(form.cost), price: Number(form.price), quantity: Number(form.qty), expiredDate: form.expDate };
-          const ref = db.collection(`artifacts/${APP_ID}/users/${userId}/products`);
-          if (form.id) await ref.doc(form.id).update(data); else await ref.add(data);
+          const safeUserId = String(userId);
+          const productsRef = db.collection(`artifacts/${APP_ID}/users/${safeUserId}/products`);
+          
+          if (form.id) await productsRef.doc(String(form.id)).update(data);
+          else await productsRef.add(data);
+          
           setShowForm(false); setForm({ id: null, name: '', cost: '', price: '', qty: '', expDate: '' });
-          showAlert("သိမ်းဆည်းပြီးပါပြီ။");
-        } catch (err) { showAlert(err.message); }
+          showAlert("အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။");
+        } catch (err) { showAlert("Data သိမ်းဆည်းရာတွင် အမှားဖြစ်နေပါသည်: \n" + err.message); }
       };
 
-      const deleteItem = (id) => showConfirm('ပစ္စည်းကို ဖယ်ရှားရန် သေချာပါသလား?', async () => {
-        try { await db.collection(`artifacts/${APP_ID}/users/${userId}/products`).doc(id).delete(); } catch (err) { showAlert(err.message); }
-      });
+      const deleteItem = (id) => { 
+        if (!id) return;
+        showConfirm('ဤပစ္စည်းကို စာရင်းမှ ဖယ်ရှားရန် သေချာပါသလား?', async () => {
+          try { 
+            await db.collection(`artifacts/${APP_ID}/users/${userId}/products`).doc(String(id)).delete(); 
+            showAlert("အောင်မြင်စွာ ဖယ်ရှားပြီးပါပြီ။"); 
+          } 
+          catch (err) { showAlert("ဖျက်ရာတွင် အမှားဖြစ်နေပါသည်: \n" + err.message); }
+        });
+      };
 
       const getRowStyle = (p) => {
-        if (!p.expiredDate) return styles.neoCard;
+        const base = "bg-white rounded-2xl p-4 shadow-sm border flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ";
+        if (!p.expiredDate) return base + "border-gray-200";
         const today = new Date(); const exp = new Date(p.expiredDate);
         const monthsDiff = (exp.getFullYear() - today.getFullYear()) * 12 + (exp.getMonth() - today.getMonth());
         const isLowQty = p.quantity < 10; const isExpiring = monthsDiff < 3 && monthsDiff >= 0;
-        if (isLowQty && isExpiring) return "bg-orange-500/20 border-orange-400/50 text-orange-100 backdrop-blur-md rounded-3xl shadow-xl overflow-hidden";
-        if (isLowQty) return "bg-rose-500/20 border-rose-400/50 text-rose-100 backdrop-blur-md rounded-3xl shadow-xl overflow-hidden";
-        if (isExpiring) return "bg-amber-500/20 border-amber-400/50 text-amber-100 backdrop-blur-md rounded-3xl shadow-xl overflow-hidden";
-        return styles.neoCard;
+        
+        if (isLowQty && isExpiring) return base + "border-red-400 bg-red-50";
+        if (isLowQty) return base + "border-orange-300 bg-orange-50";
+        if (isExpiring) return base + "border-yellow-300 bg-yellow-50";
+        return base + "border-gray-200";
       };
 
       return (
-        <div className="space-y-6 animate-in fade-in">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"><h2 className={styles.headerText}>ပစ္စည်းစာရင်း (Inventory)</h2><button onClick={() => setShowForm(!showForm)} className={styles.neoBtnPrimary}><i className="fas fa-plus"></i> အသစ်ထည့်မည်</button></div>
+        <div className="space-y-6 animate-in fade-in duration-300">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <h2 className={styles.headerText}>{t.purchase} (ပစ္စည်းစာရင်း)</h2>
+            <button onClick={() => setShowForm(!showForm)} className={styles.neoBtnPrimary}>{showForm ? t.cancel : <><i className="fas fa-plus text-xl"></i> {t.add}</>}</button>
+          </div>
           {showForm && (
-            <form onSubmit={handleSubmit} className={`${styles.neoCard} p-6 grid grid-cols-1 md:grid-cols-2 gap-4`}>
-              <input required placeholder="ပစ္စည်းအမည်" value={form.name} onChange={e=>setForm({...form, name: e.target.value})} className={styles.neoInput} />
-              <input required type="number" step="any" placeholder="အရင်း" value={form.cost} onChange={e=>setForm({...form, cost: e.target.value})} className={styles.neoInput} />
-              <input required type="number" step="any" placeholder="ရောင်းဈေး" value={form.price} onChange={e=>setForm({...form, price: e.target.value})} className={styles.neoInput} />
-              <input required type="number" step="any" placeholder="အရေအတွက်" value={form.qty} onChange={e=>setForm({...form, qty: e.target.value})} className={styles.neoInput} />
-              <input type="date" placeholder="ကုန်ဆုံးရက်" value={form.expDate} onChange={e=>setForm({...form, expDate: e.target.value})} className={styles.neoInput} />
-              {/* Fix for mobile button hiding: Add mb-24 */}
-              <div className="md:col-span-2 flex justify-end gap-4 mt-4 mb-24 md:mb-4"><button type="button" onClick={()=>setShowForm(false)} className={`${styles.neoBtn} flex-1 md:flex-none`}>မလုပ်တော့ပါ</button><button type="submit" className={`${styles.neoBtnPrimary} flex-1 md:flex-none`}>သိမ်းမည်</button></div>
+            <form onSubmit={handleSubmit} className={`${styles.neoCard} p-6 grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 border-black`}>
+              <input required placeholder={t.name} value={form.name} onChange={e=>setForm({...form, name: e.target.value})} className={styles.neoInput} />
+              <input required type="number" step="any" placeholder={t.cost} value={form.cost} onChange={e=>setForm({...form, cost: e.target.value})} className={styles.neoInput} />
+              <input required type="number" step="any" placeholder={t.price} value={form.price} onChange={e=>setForm({...form, price: e.target.value})} className={styles.neoInput} />
+              <input required type="number" step="any" placeholder={t.qty} value={form.qty} onChange={e=>setForm({...form, qty: e.target.value})} className={styles.neoInput} />
+              <input required type="date" placeholder={t.expDate} value={form.expDate} onChange={e=>setForm({...form, expDate: e.target.value})} className={styles.neoInput} />
+              <div className="md:col-span-2 flex justify-end"><button type="submit" className={`${styles.neoBtnPrimary} px-8 py-4`}>{t.save}</button></div>
             </form>
           )}
-          <div className="relative"><i className="fas fa-search absolute left-4 top-5 text-cyan-300"></i><input type="text" placeholder="ရှာဖွေရန်..." value={search} onChange={e=>setSearch(e.target.value)} className={`${styles.neoInput} pl-12`} /></div>
-          <div className="grid gap-4 pb-10">
-            {sortedProducts.length === 0 && <p className="text-white/50 text-center py-8 font-bold">ပစ္စည်းမရှိသေးပါ။</p>}
+          <div className="relative">
+            <i className="fas fa-search absolute left-4 top-5 text-gray-400 text-lg"></i>
+            <input type="text" placeholder={t.search} value={search} onChange={e=>setSearch(e.target.value)} className={`${styles.neoInput} pl-12 border-gray-300`} />
+          </div>
+          <div className="grid gap-4">
+            {sortedProducts.length === 0 && <p className="text-gray-500 text-center py-8 font-bold">No products found.</p>}
             {sortedProducts.map(p => (
-              <div key={p.id} className={`${getRowStyle(p)} p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4`}>
-                <div><h3 className="font-bold text-lg">{p.name}</h3><p className="text-sm text-cyan-100/80">ရင်း: {p.cost} | ရောင်း: {p.price} | လက်ကျန်: <span className="font-extrabold text-cyan-300">{p.quantity}</span></p></div>
-                <div className="flex gap-2"><button onClick={()=> { setForm({ id: p.id, name: p.name, cost: p.cost, price: p.price, qty: p.quantity, expDate: p.expiredDate||'' }); setShowForm(true); }} className="p-2 text-blue-300 hover:text-blue-200 bg-white/5 rounded-lg"><i className="fas fa-edit"></i></button><button onClick={()=>deleteItem(p.id)} className="p-2 text-rose-400 hover:text-rose-300 bg-white/5 rounded-lg"><i className="fas fa-trash-alt"></i></button></div>
+              <div key={p.id} className={getRowStyle(p)}>
+                <div>
+                  <h3 className="font-bold text-lg text-black">{p.name}</h3>
+                  <p className="text-sm text-gray-600 font-medium mt-1">{t.cost}: {p.cost} | {t.price}: {p.price} | {t.qty}: <span className="font-black text-black text-base">{p.quantity}</span> | EXP: {p.expiredDate}</p>
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={(e)=> { e.preventDefault(); e.stopPropagation(); setForm({ id: p.id, name: p.name, cost: p.cost, price: p.price, qty: p.quantity, expDate: p.expiredDate }); setShowForm(true); }} className="p-3 bg-gray-100 rounded-xl text-blue-600 hover:bg-gray-200 transition-colors"><i className="fas fa-edit text-lg"></i></button>
+                  <button onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); deleteItem(p.id); }} className="p-3 bg-red-50 rounded-xl text-red-600 hover:bg-red-100 transition-colors"><i className="fas fa-trash-alt text-lg"></i></button>
+                </div>
               </div>
             ))}
           </div>
@@ -249,10 +256,7 @@
       );
     };
 
-    // ==========================================
-    // EXPENSE TAB
-    // ==========================================
-    const ExpenseTab = ({ expenses, userId, showAlert, showConfirm }) => {
+    const ExpenseTab = ({ t, expenses, userId, showAlert, showConfirm }) => {
       const [showForm, setShowForm] = useState(false);
       const [form, setForm] = useState({ id: null, name: '', amount: '', deductProfit: true });
 
@@ -260,122 +264,138 @@
         e.preventDefault();
         try {
           const data = { name: form.name, amount: Number(form.amount), deductProfit: form.deductProfit, date: new Date().toISOString() };
-          if (form.id) await db.collection(`artifacts/${APP_ID}/users/${userId}/expenses`).doc(form.id).update(data);
-          else await db.collection(`artifacts/${APP_ID}/users/${userId}/expenses`).add(data);
+          const safeUserId = String(userId);
+          const expensesRef = db.collection(`artifacts/${APP_ID}/users/${safeUserId}/expenses`);
+
+          if (form.id) await expensesRef.doc(String(form.id)).update(data);
+          else await expensesRef.add(data);
+          
           setShowForm(false); setForm({ id: null, name: '', amount: '', deductProfit: true });
-        } catch (err) { showAlert(err.message); }
+          showAlert("အသုံးစရိတ် သိမ်းဆည်းပြီးပါပြီ။");
+        } catch (err) { showAlert("Data သိမ်းဆည်းရာတွင် အမှားဖြစ်နေပါသည်:\n" + err.message); }
       };
 
-      const deleteItem = (id) => showConfirm('ဖယ်ရှားရန် သေချာပါသလား?', async () => {
-        try { await db.collection(`artifacts/${APP_ID}/users/${userId}/expenses`).doc(id).delete(); } catch (err) { showAlert(err.message); }
-      });
+      const deleteItem = (id) => { 
+        if (!id) return;
+        showConfirm('ဤအသုံးစရိတ်ကို ဖယ်ရှားရန် သေချာပါသလား?', async () => {
+          try { 
+            await db.collection(`artifacts/${APP_ID}/users/${userId}/expenses`).doc(String(id)).delete(); 
+            showAlert("အောင်မြင်စွာ ဖယ်ရှားပြီးပါပြီ။"); 
+          } 
+          catch (err) { showAlert("ဖျက်ရာတွင် အမှားဖြစ်နေပါသည်:\n" + err.message); }
+        });
+      };
 
       return (
-        <div className="space-y-6 animate-in fade-in">
-          <div className="flex justify-between items-center"><h2 className={styles.headerText}>အသုံးစရိတ် (Expense)</h2><button onClick={() => setShowForm(!showForm)} className={styles.neoBtnPrimary}><i className="fas fa-plus"></i></button></div>
+        <div className="space-y-6 animate-in fade-in duration-300">
+          <div className="flex justify-between items-center">
+            <h2 className={styles.headerText}>{t.expense}</h2>
+            <button onClick={() => setShowForm(!showForm)} className={styles.neoBtnPrimary}>{showForm ? t.cancel : <><i className="fas fa-plus text-xl"></i> {t.add}</>}</button>
+          </div>
           {showForm && (
-            <form onSubmit={handleSubmit} className={`${styles.neoCard} p-6 grid grid-cols-1 md:grid-cols-2 gap-4`}>
-              <input required placeholder="အမည်" value={form.name} onChange={e=>setForm({...form, name: e.target.value})} className={styles.neoInput} />
+            <form onSubmit={handleSubmit} className={`${styles.neoCard} p-6 grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 border-black`}>
+              <input required placeholder={t.name} value={form.name} onChange={e=>setForm({...form, name: e.target.value})} className={styles.neoInput} />
               <input required type="number" step="any" placeholder="Amount" value={form.amount} onChange={e=>setForm({...form, amount: e.target.value})} className={styles.neoInput} />
-              <label className="flex items-center gap-3 md:col-span-2 font-bold text-cyan-100"><input type="checkbox" checked={form.deductProfit} onChange={e=>setForm({...form, deductProfit: e.target.checked})} className="w-5 h-5 accent-cyan-500 rounded" /> အမြတ်ထဲမှ နုတ်မည်</label>
-              {/* Fix for mobile button hiding: Add mb-24 */}
-              <div className="md:col-span-2 flex flex-col md:flex-row justify-end gap-4 mt-4 mb-24 md:mb-4"><button type="button" onClick={()=>setShowForm(false)} className={styles.neoBtn}>မလုပ်တော့ပါ</button><button type="submit" className={styles.neoBtnPrimary}>သိမ်းမည်</button></div>
+              <label className="flex items-center gap-3 md:col-span-2 text-base font-bold text-black cursor-pointer">
+                <input type="checkbox" checked={form.deductProfit} onChange={e=>setForm({...form, deductProfit: e.target.checked})} className="w-6 h-6 accent-black" />
+                {t.deductProfit}
+              </label>
+              <div className="md:col-span-2 flex justify-end"><button type="submit" className={`${styles.neoBtnPrimary} px-8 py-4`}>{t.save}</button></div>
             </form>
           )}
-          <div className="grid gap-4 pb-10">
+          <div className="grid gap-4">
             {expenses.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(e => (
               <div key={e.id} className={`${styles.neoCard} p-4 flex justify-between items-center`}>
-                <div><h3 className="font-bold text-lg">{e.name}</h3><p className="text-sm text-cyan-100/70">{e.amount.toLocaleString()} Ks | {e.deductProfit ? 'Deduct' : 'No Deduct'}</p></div>
-                <button onClick={()=>deleteItem(e.id)} className="p-3 text-rose-400 hover:text-rose-300 bg-white/5 rounded-lg"><i className="fas fa-trash-alt"></i></button>
+                <div>
+                  <h3 className="font-bold text-lg text-black">{e.name}</h3>
+                  <p className="text-sm font-medium text-gray-500 mt-1">Amount: <span className="text-black font-bold">{e.amount}</span> | {e.deductProfit ? 'Deducts Profit' : 'Does not deduct'}</p>
+                </div>
+                <div className="flex gap-2"><button onClick={(ev)=>{ev.preventDefault(); ev.stopPropagation(); deleteItem(e.id);}} className="p-3 bg-red-50 rounded-xl text-red-600 hover:bg-red-100"><i className="fas fa-trash-alt text-lg"></i></button></div>
               </div>
             ))}
-            {expenses.length === 0 && <p className="text-center py-8 font-bold text-white/50">အသုံးစရိတ် မရှိသေးပါ။</p>}
           </div>
         </div>
       );
     };
 
-    // ==========================================
-    // REPORT TAB
-    // ==========================================
-    const ReportTab = ({ products, sales, preorders, expenses }) => {
+    const ReportTab = ({ t, products, sales, expenses }) => {
       const [filter, setFilter] = useState('daily'); 
       const filteredData = useMemo(() => {
-        const now = new Date(); 
+        const now = new Date(); let fSales = []; let fExpenses = [];
         const isSameDay = (d1, d2) => d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
+        const isSameWeek = (d1, d2) => {
+          const oneJan = new Date(d1.getFullYear(),0,1); const w1 = Math.ceil((((d1.getTime() - oneJan.getTime()) / 86400000) + oneJan.getDay()+1)/7);
+          const oneJan2 = new Date(d2.getFullYear(),0,1); const w2 = Math.ceil((((d2.getTime() - oneJan2.getTime()) / 86400000) + oneJan2.getDay()+1)/7);
+          return w1 === w2 && d1.getFullYear() === d2.getFullYear();
+        };
         const isSameMonth = (d1, d2) => d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth();
         const isSameYear = (d1, d2) => d1.getFullYear() === d2.getFullYear();
 
-        const validSales = sales.filter(s => { const d = new Date(s.date); return filter==='daily'?isSameDay(d,now) : filter==='monthly'?isSameMonth(d,now) : filter==='yearly'?isSameYear(d,now) : true; });
-        const validPreorders = preorders.filter(po => { 
-          const d = new Date(po.orderDate); 
-          const isTimeMatch = filter==='daily'?isSameDay(d,now) : filter==='monthly'?isSameMonth(d,now) : filter==='yearly'?isSameYear(d,now) : true;
-          return isTimeMatch && (po.orderStatus === 'Completed' || po.orderStatus === 'Sent' || po.paymentStatus === 'Paid'); 
-        });
-        const validExpenses = expenses.filter(e => { 
-          if(!e.deductProfit) return false; 
-          const d = new Date(e.date); 
-          return filter==='daily'?isSameDay(d,now) : filter==='monthly'?isSameMonth(d,now) : filter==='yearly'?isSameYear(d,now) : true; 
-        });
+        fSales = sales.filter(s => { const d = new Date(s.date); if(filter==='daily') return isSameDay(d, now); if(filter==='weekly') return isSameWeek(d, now); if(filter==='monthly') return isSameMonth(d, now); if(filter==='yearly') return isSameYear(d, now); return true; });
+        fExpenses = expenses.filter(e => { if(!e.deductProfit) return false; const d = new Date(e.date); if(filter==='daily') return isSameDay(d, now); if(filter==='weekly') return isSameWeek(d, now); if(filter==='monthly') return isSameMonth(d, now); if(filter==='yearly') return isSameYear(d, now); return true; });
 
         let totalSalePrice = 0; let totalCost = 0; let totalServiceFee = 0; let itemSalesCount = {};
-        
-        validSales.forEach(s => {
+        fSales.forEach(s => {
           totalServiceFee += Number(s.serviceFee || 0);
-          s.items.forEach(i => { totalSalePrice += Math.round(i.price * i.qty); totalCost += Math.round(i.cost * i.qty); itemSalesCount[i.productId] = (itemSalesCount[i.productId] || 0) + Number(i.qty); });
+          s.items.forEach(i => { 
+            totalSalePrice += Math.round(i.price * i.qty); 
+            totalCost += Math.round(i.cost * i.qty); 
+            itemSalesCount[i.productId] = (itemSalesCount[i.productId] || 0) + Number(i.qty); 
+          });
         });
-        
-        validPreorders.forEach(po => {
-          totalServiceFee += Number(po.serviceFee || 0);
-          totalSalePrice += Math.round(po.price * po.quantity);
-          totalCost += Math.round(po.cost * po.quantity);
-          itemSalesCount[po.productId] = (itemSalesCount[po.productId] || 0) + Number(po.quantity);
-        });
-
-        const totalExpense = validExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+        const totalExpense = fExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
         const netProfit = (totalSalePrice - totalCost) + totalServiceFee - totalExpense;
         const bestSellers = Object.keys(itemSalesCount).map(id => { const p = products.find(x => x.id === id); return { name: p ? p.name : 'Unknown', qty: itemSalesCount[id] }; }).sort((a,b) => b.qty - a.qty).slice(0, 10);
-        return { totalSalePrice: totalSalePrice + totalServiceFee, netProfit, bestSellers };
-      }, [sales, preorders, expenses, products, filter]);
+        return { totalSalePrice: totalSalePrice + totalServiceFee, netProfit, bestSellers, totalExpense };
+      }, [sales, expenses, products, filter]);
 
-      const inventoryAsset = useMemo(() => products.reduce((sum, p) => sum + Math.round(p.cost * p.quantity), 0), [products]);
+      const inventoryAsset = useMemo(() => { 
+        return products.reduce((sum, p) => sum + Math.round(p.cost * p.quantity), 0); 
+      }, [products]);
 
       return (
-        <div className="space-y-6 animate-in fade-in pb-10">
-          <h2 className={styles.headerText}>အစီရင်ခံစာ (Report)</h2>
+        <div className="space-y-6 animate-in fade-in duration-300">
+          <h2 className={styles.headerText}>{t.report}</h2>
           <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
-            {['daily', 'monthly', 'yearly', 'grand'].map(f => (
-              <button key={f} onClick={() => setFilter(f)} className={`${styles.neoBtn} px-6 py-2 whitespace-nowrap uppercase ${filter === f ? 'text-cyan-300 bg-white/20 border-cyan-400/50 shadow-[0_0_10px_rgba(34,211,238,0.3)]' : ''}`}>{f}</button>
+            {['daily', 'weekly', 'monthly', 'yearly', 'grand'].map(f => (
+              <button key={f} onClick={() => setFilter(f)} className={`${styles.neoBtn} px-6 py-3 whitespace-nowrap border-2 ${filter === f ? 'bg-black text-white border-black' : 'text-gray-600 border-gray-200'}`}>{f === 'grand' ? t.grandTotal : t[f]}</button>
             ))}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className={`${styles.neoCard} p-6 flex flex-col justify-center items-center text-center space-y-4 bg-gradient-to-br from-blue-900/40 to-slate-900/40`}>
-              <h3 className="font-bold text-cyan-100/80 uppercase tracking-widest text-sm">Total Revenue</h3>
-              <p className="text-4xl font-black text-cyan-300 drop-shadow-md">{filteredData.totalSalePrice.toLocaleString()}</p>
-              <h3 className="font-bold text-cyan-100/80 uppercase tracking-widest text-sm pt-4 border-t border-white/10 w-full">Net Profit</h3>
-              <p className="text-4xl font-black text-emerald-400 drop-shadow-md">{filteredData.netProfit.toLocaleString()}</p>
+            <div className={`${styles.neoCard} p-6 flex flex-col justify-center items-center text-center space-y-4`}>
+              <h3 className="text-xl font-bold text-gray-500">Total Sales ({filter})</h3>
+              <p className="text-4xl font-extrabold text-black">{filteredData.totalSalePrice.toLocaleString()}</p>
+              <h3 className="text-xl font-bold text-gray-500 pt-4 border-t border-gray-200 w-full">Net Profit</h3>
+              <p className="text-4xl font-extrabold text-green-600">{filteredData.netProfit.toLocaleString()}</p>
+              <p className="text-xs text-gray-400 font-medium">(Sales - Cost + Service Fee - Deductible Expenses)</p>
             </div>
             <div className={`${styles.neoCard} p-6`}>
-              <h3 className="font-bold mb-4 border-b border-white/10 pb-2 text-cyan-100">Best Selling (Top 10)</h3>
+              <h3 className="text-xl font-bold mb-4 border-b border-gray-200 pb-2 text-black">{t.bestSelling} (Top 10)</h3>
               <div className="space-y-2">
-                {filteredData.bestSellers.length === 0 && <p className="text-white/50 text-sm font-bold">No Data</p>}
-                {filteredData.bestSellers.map((b, i) => <div key={i} className="flex justify-between bg-white/5 p-3 rounded-xl border border-white/5"><span className="font-bold text-white">{i+1}. {b.name}</span><span className="bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-3 py-1 rounded-lg text-sm font-bold">{b.qty} sold</span></div>)}
+                {filteredData.bestSellers.length === 0 && <p className="text-gray-400 font-medium">No data</p>}
+                {filteredData.bestSellers.map((b, i) => (
+                  <div key={i} className="flex justify-between items-center bg-gray-50 border border-gray-100 p-3 rounded-xl">
+                    <span className="font-bold text-black">{i+1}. {b.name}</span><span className="bg-gray-200 text-black px-3 py-1 rounded-full text-sm font-bold">{Number(b.qty.toFixed(3))} sold</span>
+                  </div>
+                ))}
               </div>
             </div>
-            <div className={`${styles.neoCard} p-6 md:col-span-2 flex justify-between items-center bg-gradient-to-r from-cyan-900/30 to-blue-900/30`}>
-              <h3 className="text-xl font-bold text-cyan-100">Inventory Asset</h3>
-              <p className="text-3xl font-black text-white drop-shadow-sm">{inventoryAsset.toLocaleString()} Ks</p>
+            <div className={`${styles.neoCard} p-6 md:col-span-2 flex justify-between items-center bg-black text-white`}>
+              <h3 className="text-xl font-bold">{t.inventory}</h3>
+              <p className="text-3xl font-extrabold">{inventoryAsset.toLocaleString()}</p>
             </div>
           </div>
         </div>
       );
     };
 
-    // ==========================================
-    // SALE TAB
-    // ==========================================
-    const SaleTab = ({ products, customersWithData, sales, userId, showAlert, showConfirm }) => {
-      const getLocalDateString = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().split('T')[0]; };
+    const SaleTab = ({ t, products, customersWithData, sales, userId, showAlert, showConfirm }) => {
+      const getLocalDateString = () => {
+        const d = new Date();
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        return d.toISOString().split('T')[0];
+      };
+
       const [cart, setCart] = useState([]);
       const [selectedProduct, setSelectedProduct] = useState('');
       const [qty, setQty] = useState('1'); 
@@ -388,112 +408,224 @@
       const grandTotal = itemsTotal + Number(serviceFee || 0);
       const payAmount = Number(payAmountInput || 0); 
       const balance = grandTotal - payAmount;
+      const isPaid = balance <= 0 && grandTotal > 0;
 
       const addToCart = () => {
         const p = products.find(x => x.id === selectedProduct);
         if (!p) return;
+        
         const quantityToAdd = parseFloat(qty);
         if (isNaN(quantityToAdd) || quantityToAdd <= 0) return showAlert('အရေအတွက် မှန်ကန်စွာ ထည့်ပါ။');
+        
         if (p.quantity < quantityToAdd) return showAlert('စတော့စာရင်းတွင် ပစ္စည်းအရေအတွက် မလောက်ပါ!');
         
         const existing = cart.find(c => c.productId === p.id);
         if (existing) {
           if (p.quantity < existing.qty + quantityToAdd) return showAlert('စတော့စာရင်းတွင် ပစ္စည်းအရေအတွက် မလောက်ပါ!');
           setCart(cart.map(c => c.productId === p.id ? { ...c, qty: c.qty + quantityToAdd } : c));
-        } else setCart([...cart, { productId: p.id, name: p.name, price: p.price, cost: p.cost, qty: quantityToAdd }]);
+        } else {
+          setCart([...cart, { productId: p.id, name: p.name, price: p.price, cost: p.cost, qty: quantityToAdd }]);
+        }
         setQty('1'); setSelectedProduct('');
       };
 
+      const removeCart = (idx) => setCart(cart.filter((_, i) => i !== idx));
+
       const handleCheckout = async () => {
-        if (!customerId) return showAlert('Customer ရွေးချယ်ပါ။');
-        if (cart.length === 0) return showAlert('ခြင်းထဲသို့ ပစ္စည်းထည့်ပါ။');
+        if (!saleDate) return showAlert('ကျေးဇူးပြု၍ ရက်စွဲ (Date) ရွေးချယ်ပါ။');
+        if (!customerId) return showAlert('ကျေးဇူးပြု၍ Customer အမည်ကို ရွေးချယ်ပါ။ (မရှိပါက Customer စာမျက်နှာတွင် အရင်ထည့်ပါ)');
+        if (cart.length === 0) return showAlert('ရောင်းချရန် ပစ္စည်းများကို ခြင်းထဲသို့ အရင်ထည့်ပါ။');
+        if (payAmount > grandTotal) return showAlert('ပေးချေငွေသည် စုစုပေါင်းကျသင့်ငွေထက် များနေပါသည်။');
+        
         try {
-          const selectedDateObj = new Date(saleDate); const now = new Date(); selectedDateObj.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+          const selectedDateObj = new Date(saleDate);
+          const now = new Date();
+          selectedDateObj.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+          const saleDateString = selectedDateObj.toISOString();
+
+          const customerObj = customersWithData.find(c => c.id === customerId);
           const safeUserId = String(userId);
+
           const saleData = {
-            customerId, customerName: customersWithData.find(c => c.id === customerId)?.name || 'Unknown',
-            date: selectedDateObj.toISOString(), items: cart, itemsTotal, serviceFee: Number(serviceFee),
-            grandTotal, payAmount, balance: balance > 0 ? balance : 0, status: (balance <= 0 && grandTotal > 0) ? 'Paid' : 'Unpaid'
+            customerId: customerId, 
+            customerName: customerObj ? customerObj.name : 'Unknown',
+            date: saleDateString, 
+            items: cart, 
+            itemsTotal: itemsTotal, 
+            serviceFee: Number(serviceFee),
+            grandTotal: grandTotal, 
+            payAmount: payAmount, 
+            balance: balance > 0 ? balance : 0, 
+            status: isPaid ? 'Paid' : 'Unpaid'
           };
 
           for (let item of cart) {
             const p = products.find(x => x.id === item.productId);
-            if (p) await db.collection(`artifacts/${APP_ID}/users/${safeUserId}/products`).doc(p.id).update({ quantity: Number((p.quantity - item.qty).toFixed(3)) });
+            if (p && p.id) {
+              await db.collection(`artifacts/${APP_ID}/users/${safeUserId}/products`).doc(String(p.id)).update({
+                quantity: Number((p.quantity - item.qty).toFixed(3))
+              });
+            }
           }
+
           await db.collection(`artifacts/${APP_ID}/users/${safeUserId}/sales`).add(saleData);
-          setCart([]); setCustomerId(''); setServiceFee(0); setPayAmountInput(''); showAlert("ရောင်းချပြီးပါပြီ။");
-        } catch (err) { showAlert(err.message); }
+          
+          setCart([]); setCustomerId(''); setServiceFee(0); setPayAmountInput('');
+          setSaleDate(getLocalDateString()); 
+          showAlert("အောင်မြင်စွာ ရောင်းချပြီးပါပြီ။\nသက်ဆိုင်ရာ Customer ၏ မှတ်တမ်းထဲသို့ တိုက်ရိုက် ရောက်ရှိသွားပါမည်။");
+        } catch (err) { showAlert("ရောင်းချရာတွင် အမှားဖြစ်နေပါသည်: \n" + err.message); }
       };
 
-      const deleteSale = (sale) => showConfirm('မှတ်တမ်းကို ဖျက်ပြီး ပစ္စည်းများကို ပြန်ပေါင်းထည့်မလား?', async () => {
-        try {
-          const safeUserId = String(userId);
-          for (let item of sale.items) {
-            const p = products.find(x => x.id === item.productId);
-            if (p) await db.collection(`artifacts/${APP_ID}/users/${safeUserId}/products`).doc(p.id).update({ quantity: Number((p.quantity + item.qty).toFixed(3)) });
-          }
-          await db.collection(`artifacts/${APP_ID}/users/${safeUserId}/sales`).doc(sale.id).delete();
-        } catch (err) { showAlert(err.message); }
-      });
+      const deleteSale = (sale) => {
+        if (!sale || !sale.id) return;
+        showConfirm('ဤရောင်းချမှုမှတ်တမ်းကို ဖျက်ပြီး ပစ္စည်းအရေအတွက်ကို စာရင်းထဲသို့ ပြန်ပေါင်းထည့်မလား?', async () => {
+          try {
+            const safeUserId = String(userId);
+            for (let item of sale.items) {
+              const p = products.find(x => x.id === item.productId);
+              if (p && p.id) {
+                await db.collection(`artifacts/${APP_ID}/users/${safeUserId}/products`).doc(String(p.id)).update({
+                  quantity: Number((p.quantity + item.qty).toFixed(3))
+                });
+              }
+            }
+            await db.collection(`artifacts/${APP_ID}/users/${safeUserId}/sales`).doc(String(sale.id)).delete();
+            showAlert("ရောင်းချမှုမှတ်တမ်းကို ဖျက်သိမ်းပြီး ပစ္စည်းများကို ပြန်လည်ပေါင်းထည့်ပြီးပါပြီ။");
+          } catch (err) { showAlert("ဖျက်ရာတွင် အမှားဖြစ်နေပါသည်:\n" + err.message); }
+        });
+      };
 
       return (
-        <div className="space-y-6 animate-in fade-in pb-10">
-          <h2 className={styles.headerText}>အရောင်း (Sale)</h2>
+        <div className="space-y-6 animate-in fade-in duration-300">
+          <h2 className={styles.headerText}>{t.sale} (ဘေလ်ဖွင့်ရန်)</h2>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-7 space-y-4">
-              <div className={`${styles.neoCard} p-6 space-y-5`}>
+              <div className={`${styles.neoCard} p-6 space-y-5 border-gray-300 shadow-md`}>
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input type="date" value={saleDate} onChange={e=>setSaleDate(e.target.value)} className={styles.neoInput} />
-                  <select value={customerId} onChange={e=>setCustomerId(e.target.value)} className={styles.neoInput}>
-                    <option value="">-- Customer ရွေးပါ --</option>
-                    {customersWithData.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </div>
-                <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
-                  <div className="flex gap-2">
-                    <select value={selectedProduct} onChange={e=>setSelectedProduct(e.target.value)} className={`${styles.neoInput} flex-1`}>
-                      <option value="">-- ပစ္စည်းရွေးပါ --</option>
-                      {products.map(p => <option key={p.id} value={p.id} disabled={p.quantity<=0}>{p.name} ({Number(p.quantity)}) - {p.price}Ks</option>)}
+                  <div className="space-y-1">
+                    <label className="text-sm font-bold text-gray-600 ml-1">ရက်စွဲ (Date) *</label>
+                    <input type="date" value={saleDate} onChange={e=>setSaleDate(e.target.value)} className={styles.neoInput} required />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-bold text-gray-600 ml-1">ဖောက်သည် ရွေးချယ်ရန် *</label>
+                    <select value={customerId} onChange={e=>setCustomerId(e.target.value)} className={styles.neoInput}>
+                      <option value="">-- Customer ရွေးချယ်ပါ --</option>
+                      {customersWithData.map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} {c.balance > 0 ? `(ယခင်အကြွေးကျန်: ${c.balance.toLocaleString()})` : ''}
+                        </option>
+                      ))}
                     </select>
-                    <input type="number" step="any" min="0" value={qty} onChange={e=>setQty(e.target.value)} className={`${styles.neoInput} w-24 text-center text-cyan-300`} />
-                    <button onClick={addToCart} className={`${styles.neoBtnPrimary} px-4`}><i className="fas fa-plus"></i></button>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    <button onClick={()=>setQty('0.5')} className="text-[11px] font-bold bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg border border-white/20 shadow-sm transition-colors">၁/၂</button>
-                    <button onClick={()=>setQty(String(Number((1/3).toFixed(3))))} className="text-[11px] font-bold bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg border border-white/20 shadow-sm transition-colors">၁/၃</button>
-                    <button onClick={()=>setQty(String(Number((2/3).toFixed(3))))} className="text-[11px] font-bold bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg border border-white/20 shadow-sm transition-colors">၂/၃</button>
-                    <button onClick={()=>setQty('0.25')} className="text-[11px] font-bold bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg border border-white/20 shadow-sm transition-colors">၁/၄</button>
-                    <button onClick={()=>setQty('1')} className="text-[11px] font-bold bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg border border-white/30 shadow-sm transition-colors">၁ ခု</button>
                   </div>
                 </div>
-                <div className="min-h-[150px] bg-slate-900/40 rounded-xl p-4 shadow-inner border border-white/5 overflow-y-auto custom-scrollbar">
+
+                <div className="pt-2 border-t border-gray-200"></div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-600 ml-1">ပစ္စည်း ထည့်သွင်းရန်</label>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex gap-2 h-14">
+                      <select value={selectedProduct} onChange={e=>setSelectedProduct(e.target.value)} className={`${styles.neoInput} flex-1 !p-3`}>
+                        <option value="">-- ပစ္စည်းရွေးပါ --</option>
+                        {products.map(p => <option key={p.id} value={p.id} disabled={p.quantity<=0}>{p.name} (လက်ကျန်: {Number(p.quantity)}) - {p.price}Ks</option>)}
+                      </select>
+                      <input type="number" step="any" min="0.001" value={qty} onChange={e=>setQty(e.target.value)} placeholder="အရေအတွက်" className={`${styles.neoInput} w-24 text-center px-1 font-bold text-black !p-3`} />
+                      <button onClick={addToCart} className={`${styles.neoBtnPrimary} px-6 h-full`}><i className="fas fa-plus text-xl"></i></button>
+                    </div>
+                    {/* Fraction Shortcut Buttons (Larger for Touch) */}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <button onClick={()=>setQty('0.5')} className="text-sm font-bold bg-white text-black px-4 py-2 rounded-xl border-2 border-gray-200 hover:bg-gray-100 active:scale-95 transition-transform touch-manipulation">၁/၂</button>
+                      <button onClick={()=>setQty(String(Number((1/3).toFixed(3))))} className="text-sm font-bold bg-white text-black px-4 py-2 rounded-xl border-2 border-gray-200 hover:bg-gray-100 active:scale-95 transition-transform touch-manipulation">၁/၃</button>
+                      <button onClick={()=>setQty(String(Number((2/3).toFixed(3))))} className="text-sm font-bold bg-white text-black px-4 py-2 rounded-xl border-2 border-gray-200 hover:bg-gray-100 active:scale-95 transition-transform touch-manipulation">၂/၃</button>
+                      <button onClick={()=>setQty('0.25')} className="text-sm font-bold bg-white text-black px-4 py-2 rounded-xl border-2 border-gray-200 hover:bg-gray-100 active:scale-95 transition-transform touch-manipulation">၁/၄</button>
+                      <button onClick={()=>setQty('0.2')} className="text-sm font-bold bg-white text-black px-4 py-2 rounded-xl border-2 border-gray-200 hover:bg-gray-100 active:scale-95 transition-transform touch-manipulation">၁/၅</button>
+                      <button onClick={()=>setQty('1')} className="text-sm font-bold bg-black text-white px-4 py-2 rounded-xl border-2 border-black hover:bg-gray-800 active:scale-95 transition-transform touch-manipulation">၁ ခု အပြည့်</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="min-h-[180px] bg-gray-50 rounded-xl p-4 border-2 border-gray-200">
+                  {cart.length === 0 && <p className="text-center text-gray-400 mt-10 text-sm font-bold">ခြင်းထဲတွင် ပစ္စည်းမရှိသေးပါ</p>}
                   {cart.map((c, i) => (
-                    <div key={i} className="flex justify-between items-center mb-3 border-b border-white/10 pb-2">
-                      <div className="flex flex-col"><span className="font-bold text-white text-sm">{c.name}</span><span className="text-xs text-cyan-200/60">{c.price} x {c.qty}</span></div>
-                      <div className="flex items-center gap-4"><span className="font-bold text-cyan-300">{(Math.round(c.price * c.qty)).toLocaleString()}</span><button onClick={()=>removeCart(i)} className="text-rose-400 hover:text-rose-300 bg-white/5 p-1.5 rounded-lg"><i className="fas fa-trash-alt"></i></button></div>
+                    <div key={i} className="flex justify-between items-center mb-3 border-b border-gray-200 pb-3">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-black text-lg">{c.name}</span>
+                        <span className="text-sm font-medium text-gray-500">{c.price} x {c.qty}</span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="font-extrabold text-black text-lg">{(Math.round(c.price * c.qty)).toLocaleString()}</span>
+                        <button onClick={()=>removeCart(i)} className="text-red-600 bg-red-50 hover:bg-red-100 p-3 rounded-xl transition-colors touch-manipulation"><i className="fas fa-trash-alt"></i></button>
+                      </div>
                     </div>
                   ))}
                 </div>
-                <div className="bg-white/5 p-5 rounded-xl shadow-sm border border-white/10 space-y-3 font-bold">
-                  <div className="flex justify-between text-cyan-100/70"><span>ပစ္စည်းတန်ဖိုး:</span> <span>{itemsTotal.toLocaleString()}</span></div>
-                  <div className="flex justify-between items-center"><span className="text-cyan-100/70">ဝန်ဆောင်ခ:</span><input type="number" value={serviceFee} onChange={e=>setServiceFee(e.target.value)} className={`${styles.neoInput} w-32 py-1.5 h-10 text-right`} /></div>
-                  <div className="flex justify-between items-center text-lg text-cyan-300 pt-3 border-t border-white/10"><span>ကျသင့်ငွေ:</span> <span className="text-2xl font-black">{grandTotal.toLocaleString()}</span></div>
-                  <div className="flex justify-between items-center pt-2"><span className="text-emerald-400">ပေးသွင်းငွေ:</span><input type="number" value={payAmountInput} onChange={e=>setPayAmountInput(e.target.value)} className={`${styles.neoInput} w-32 py-1.5 h-10 text-right text-emerald-300 bg-emerald-900/20 border-emerald-500/30`} /></div>
-                  <div className={`flex justify-between pt-2 ${balance <= 0 ? 'text-emerald-400' : 'text-amber-400'}`}><span>{balance <= 0 ? 'အခြေအနေ:' : 'အကြွေးကျန်:'}</span> <span className="text-xl">{balance <= 0 ? 'Paid' : balance.toLocaleString()}</span></div>
+
+                <div className="bg-gray-100 p-5 rounded-xl border border-gray-200 space-y-4 text-base font-bold text-black">
+                  <div className="flex justify-between items-center text-gray-600">
+                    <span>ပစ္စည်းတန်ဖိုး စုစုပေါင်း:</span> <span className="text-black">{itemsTotal.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">{t.serviceFee}:</span>
+                    <input type="number" step="any" value={serviceFee} onChange={e=>setServiceFee(e.target.value)} placeholder="0" className={`${styles.neoInput} w-32 py-2 h-10 text-right font-bold text-black`} />
+                  </div>
+                  <div className="flex justify-between items-center text-xl pt-4 border-t border-gray-300">
+                    <span>ကျသင့်ငွေ စုစုပေါင်း:</span> <span className="text-3xl font-black">{grandTotal.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2">
+                    <span className="text-green-700">ပေးသွင်းငွေ (Pay Amount):</span>
+                    <input type="number" step="any" value={payAmountInput} onChange={e=>setPayAmountInput(e.target.value)} placeholder="0" className={`${styles.neoInput} w-32 py-2 h-12 text-right font-black text-xl text-green-700 border-green-300 focus:border-green-600 bg-white`} />
+                  </div>
+                  <div className={`flex justify-between items-center pt-2 text-xl ${isPaid && grandTotal > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span>{isPaid && grandTotal > 0 ? 'ငွေချေမှု အခြေအနေ:' : 'အကြွေးကျန် (Balance):'}</span> 
+                    <span className="font-black">{isPaid && grandTotal > 0 ? t.paid : balance.toLocaleString()}</span>
+                  </div>
                 </div>
-                <button onClick={handleCheckout} className={`${styles.neoBtnPrimary} w-full h-14 text-lg mb-20 md:mb-0`}>ရောင်းချမည်</button>
+
+                <button onClick={handleCheckout} className={`${styles.neoBtnPrimary} w-full h-16 text-xl tracking-wide`}>
+                  {t.save} / ရောင်းချမည်
+                </button>
               </div>
             </div>
-            <div className="lg:col-span-5 max-h-[80vh] overflow-y-auto custom-scrollbar">
-              <h3 className="font-bold text-xl mb-4 text-cyan-100"><i className="fas fa-history text-cyan-400"></i> မှတ်တမ်းများ</h3>
-              <div className="space-y-4">
-                {sales.sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0, 15).map(s => (
-                  <div key={s.id} className={`${styles.neoCard} p-4 border-l-4 ${s.status === 'Paid' ? 'border-l-emerald-400' : 'border-l-amber-400'}`}>
-                    <div className="flex justify-between font-bold mb-2"><span>{s.customerName}</span><span className={s.status==='Paid'?'text-emerald-400':'text-amber-400'}>{s.status}</span></div>
-                    <div className="text-sm space-y-1 mb-2 text-white/80">{s.items.map((i, idx) => <div key={idx} className="flex justify-between"><span>{i.name} <span className="text-[10px] bg-white/10 px-1 rounded text-cyan-300">x{i.qty}</span></span></div>)}</div>
-                    <div className="flex justify-between items-end border-t border-white/10 pt-2"><div className="text-xs font-bold text-cyan-100">Total: {s.grandTotal.toLocaleString()} {s.balance > 0 && <span className="text-amber-400 block mt-1">Bal: {s.balance.toLocaleString()}</span>}</div><button onClick={()=>deleteSale(s)} className="text-rose-400 bg-white/5 p-2 rounded-lg hover:text-rose-300"><i className="fas fa-trash-alt"></i></button></div>
-                  </div>
-                ))}
+
+            <div className="lg:col-span-5 space-y-4">
+              <h3 className="font-black text-xl flex items-center gap-2 px-2 text-black"><i className="fas fa-file-invoice-dollar text-gray-400"></i> မှတ်တမ်းများ (နောက်ဆုံးရောင်းချမှုများ)</h3>
+              <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
+                {sales.length === 0 && <p className="text-gray-500 text-center py-8 font-bold">မှတ်တမ်းမရှိသေးပါ။</p>}
+                
+                {sales.sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 15).map(s => {
+                  const customerNameDisplay = s.customerName || 'Unknown';
+                  return (
+                    <div key={s.id} className={`${styles.neoCard} p-4 border-l-4 ${s.status === 'Paid' ? 'border-l-green-500' : 'border-l-red-500'}`}>
+                      <div className="flex justify-between items-start border-b border-gray-100 pb-3 mb-3">
+                        <div>
+                          <span className="font-black text-black text-lg block">{customerNameDisplay}</span>
+                          <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-md mt-1 inline-block">
+                            <i className="fas fa-calendar-day mr-1"></i>
+                            {new Date(s.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        </div>
+                        <span className={`px-3 py-1 text-xs rounded-full font-bold border ${s.status === 'Paid' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                          {s.status}
+                        </span>
+                      </div>
+                      <div className="text-sm font-medium text-gray-700 mb-3 space-y-2">
+                        {s.items.map((i, idx) => (
+                          <div key={idx} className="flex justify-between items-center">
+                            <span>{i.name} <span className="text-xs bg-gray-200 text-black px-2 py-0.5 rounded font-bold ml-1">x{i.qty}</span></span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between items-end">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-black">Total: {s.grandTotal.toLocaleString()}</span>
+                          {s.balance > 0 && <span className="text-sm font-black text-red-600">Bal: {s.balance.toLocaleString()}</span>}
+                        </div>
+                        <button onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); deleteSale(s); }} className="text-red-500 hover:text-red-700 bg-gray-100 p-3 rounded-xl touch-manipulation"><i className="fas fa-trash-alt"></i></button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -501,488 +633,545 @@
       );
     };
 
-    // ==========================================
-    // PRE-ORDER TAB 
-    // ==========================================
-    const PreOrderTab = ({ products, customers, preorders, userId, showAlert, showConfirm }) => {
-      const getTodayString = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().split('T')[0]; };
-      
-      const [view, setView] = useState('list'); 
+    const CustomerTab = ({ t, customersWithData, sales, userId, showAlert, showConfirm }) => {
+      const [activeView, setActiveView] = useState('list'); 
       const [search, setSearch] = useState('');
-      const [filter, setFilter] = useState('all'); 
+      const [sortOrder, setSortOrder] = useState('alpha'); 
+      const [form, setForm] = useState({ id: null, name: '', age: '', gender: 'Male', phone1: '', phone2: '', phone3: '', diagnosis: '' });
       
-      const defaultForm = {
-        id: null, customerId: '', customerName: '', phone: '', productId: '', productName: '', price: 0, cost: 0, 
-        quantity: '1', note: '', orderDate: getTodayString(), expectedDate: getTodayString(), 
-        paymentStatus: 'Unpaid', payAmount: '', serviceFee: 0, orderStatus: 'Pending', isStockDeducted: false
-      };
-      const [form, setForm] = useState(defaultForm);
+      const [selectedCustomerId, setSelectedCustomerId] = useState(null);
+      const [payAmountInput, setPayAmountInput] = useState('');
 
-      const itemsTotal = Math.round((Number(form.price) || 0) * (Number(form.quantity) || 0));
-      const grandTotal = itemsTotal + Number(form.serviceFee || 0);
-      const balance = grandTotal - Number(form.payAmount || 0);
+      const sortedCustomers = useMemo(() => {
+        let res = [...customersWithData].filter(c => (c.name || '').toLowerCase().includes(search.toLowerCase()));
+        if (sortOrder === 'alpha') res.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        else res.sort((a, b) => b.balance - a.balance); 
+        return res;
+      }, [customersWithData, search, sortOrder]);
 
-      const handleProductSelect = (e) => {
-        const val = e.target.value;
-        if(!val) return setForm({...form, productId: '', productName: '', price: 0, cost: 0});
-        const p = products.find(x => x.id === val);
-        setForm({...form, productId: p.id, productName: p.name, price: p.price, cost: p.cost});
-      };
-
-      const handleCustomerSelect = (e) => {
-        const cid = e.target.value;
-        if (!cid) return setForm({...form, customerId: '', customerName: '', phone: ''});
-        const c = customers.find(x => x.id === cid);
-        setForm({...form, customerId: c.id, customerName: c.name, phone: c.phone || c.phone1 || ''});
+      const openForm = (c = null) => {
+        if (c) {
+          setForm({ 
+            id: c.id, name: c.name, age: c.age || '', gender: c.gender || 'Male', 
+            phone1: c.phone1 || '', phone2: c.phone2 || '', phone3: c.phone3 || '', diagnosis: c.diagnosis || '' 
+          });
+        } else {
+          setForm({ id: null, name: '', age: '', gender: 'Male', phone1: '', phone2: '', phone3: '', diagnosis: '' });
+        }
+        setActiveView('form');
       };
 
-      const handleSave = async (e) => {
+      const openDetail = (id) => {
+        setSelectedCustomerId(id);
+        setPayAmountInput('');
+        setActiveView('detail');
+      };
+
+      const handleSaveCustomer = async (e) => {
         e.preventDefault();
         try {
           const safeUserId = String(userId);
-          const ref = db.collection(`artifacts/${APP_ID}/users/${safeUserId}/preorders`);
+          const { id, ...customerData } = form;
+          const customersRef = db.collection(`artifacts/${APP_ID}/users/${safeUserId}/customers`);
           
-          let paymentDate = null;
-          if (form.paymentStatus === 'Paid') paymentDate = new Date().toISOString();
-          let currentOrderStat = form.id ? form.orderStatus : 'Pending';
-          if (form.paymentStatus === 'Paid' && currentOrderStat === 'Sent') currentOrderStat = 'Completed';
-
-          const data = {
-            customerId: form.customerId, customerName: form.customerName, phone: form.phone,
-            productId: form.productId, productName: form.productName, price: Number(form.price), cost: Number(form.cost),
-            quantity: Number(form.quantity), note: form.note,
-            orderDate: new Date(form.orderDate).toISOString(), expectedDate: new Date(form.expectedDate).toISOString(),
-            paymentStatus: form.paymentStatus, payAmount: Number(form.payAmount), serviceFee: Number(form.serviceFee),
-            grandTotal, balance: balance > 0 ? balance : 0,
-            paymentDate: form.id ? form.paymentDate : paymentDate, 
-            orderStatus: currentOrderStat, isStockDeducted: form.isStockDeducted
-          };
-
-          if (form.id) {
-            if (form.paymentStatus === 'Paid' && form.paymentStatus !== form.paymentStatus) data.paymentDate = new Date().toISOString();
-            await ref.doc(form.id).update(data);
-          } else await ref.add(data);
-          
-          setView('list'); setForm(defaultForm); showAlert("Pre-Order သိမ်းဆည်းပြီးပါပြီ။");
-        } catch (err) { showAlert(err.message); }
+          if (id) {
+            await customersRef.doc(String(id)).update(customerData);
+            showAlert("Customer အချက်အလက်များကို အောင်မြင်စွာ ပြင်ဆင်ပြီးပါပြီ။");
+          } else {
+            await customersRef.add(customerData);
+            showAlert("Customer အချက်အလက်ကို အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။");
+          }
+          setActiveView('list');
+        } catch (err) { showAlert("Data သိမ်းဆည်းရာတွင် အမှားဖြစ်နေပါသည်:\n" + err.message); }
       };
 
-      const updateOrderToSent = (po) => {
-        showConfirm(`ပစ္စည်းပို့ပြီးကြောင်း မှတ်သားမည်လား? (Inventory မှ ပစ္စည်းအရေအတွက် နုတ်သွားပါမည်)`, async () => {
+      const handleDeleteCustomer = (id) => {
+        if (!id) return;
+        showConfirm('ဤဖောက်သည်၏ အချက်အလက်များကို အပြီးတိုင် ဖယ်ရှားရန် သေချာပါသလား?', async () => {
+          try {
+            await db.collection(`artifacts/${APP_ID}/users/${userId}/customers`).doc(String(id)).delete();
+            showAlert("အောင်မြင်စွာ ဖယ်ရှားပြီးပါပြီ။");
+            if(activeView === 'detail') setActiveView('list');
+          } catch (err) { showAlert("ဖျက်ရာတွင် အမှားဖြစ်နေပါသည်:\n" + err.message); }
+        });
+      };
+
+      const handleIndividualPayment = (customerId, totalUnpaidBalance) => {
+        const payment = Number(payAmountInput);
+        if (!payment || payment <= 0) return showAlert("ပေးသွင်းငွေ ပမာဏကို မှန်ကန်စွာ ထည့်ပါ။");
+        if (payment > totalUnpaidBalance) return showAlert(`ပေးသွင်းငွေသည် လက်ကျန်အကြွေး (${totalUnpaidBalance.toLocaleString()}) ထက် များနေပါသည်။`);
+
+        showConfirm(`${payment.toLocaleString()} ကျပ် ငွေချေရန် သေချာပါသလား?\n\n(စနစ်မှ အဟောင်းဆုံး အကြွေးဘေလ်များကို အရင်ဆုံး အလိုအလျောက် ဖြတ်တောက် ရှင်းလင်းပေးသွားပါမည်။)`, async () => {
           try {
             const safeUserId = String(userId);
-            const poRef = db.collection(`artifacts/${APP_ID}/users/${safeUserId}/preorders`).doc(po.id);
-            const newStatus = po.paymentStatus === 'Paid' ? 'Completed' : 'Sent';
+            let amountLeftToDistribute = payment;
             
-            if (!po.isStockDeducted && po.productId) {
-               const p = products.find(x => x.id === po.productId);
-               if (p) await db.collection(`artifacts/${APP_ID}/users/${safeUserId}/products`).doc(po.productId).update({ quantity: Number((p.quantity - po.quantity).toFixed(3)) });
+            const unpaidSales = sales
+              .filter(s => s.customerId === customerId && s.status === 'Unpaid' && Number(s.balance) > 0)
+              .sort((a, b) => new Date(a.date) - new Date(b.date)); 
+
+            const salesRef = db.collection(`artifacts/${APP_ID}/users/${safeUserId}/sales`);
+
+            for (let s of unpaidSales) {
+              if (amountLeftToDistribute <= 0) break; 
+
+              let currentSaleBalance = Number(s.balance);
+              let currentPaidAmount = Number(s.payAmount || 0);
+
+              if (amountLeftToDistribute >= currentSaleBalance) {
+                amountLeftToDistribute -= currentSaleBalance;
+                await salesRef.doc(String(s.id)).update({
+                  balance: 0, payAmount: currentPaidAmount + currentSaleBalance, status: 'Paid' 
+                });
+              } else {
+                await salesRef.doc(String(s.id)).update({
+                  balance: currentSaleBalance - amountLeftToDistribute, payAmount: currentPaidAmount + amountLeftToDistribute
+                });
+                amountLeftToDistribute = 0; 
+              }
             }
-            await poRef.update({ orderStatus: newStatus, isStockDeducted: true });
-            showAlert("ပို့ဆောင်ပြီးကြောင်း မှတ်သားပြီး Inventory ကို Update လုပ်ပြီးပါပြီ။");
-          } catch(e) { showAlert(e.message); }
+            setPayAmountInput('');
+            showAlert("ငွေချေမှု အောင်မြင်ပါသည်။\nသက်ဆိုင်ရာ အရောင်းမှတ်တမ်းများတွင် အကြွေးများ အလိုအလျောက် ရှင်းလင်းသွားပါပြီ။");
+          } catch (err) { showAlert("ငွေချေရာတွင် အမှားဖြစ်နေပါသည်:\n" + err.message); }
         });
       };
 
-      const deleteOrder = (po) => {
-        showConfirm("ဤ Pre-Order အား ဖျက်သိမ်းမည် သေချာပါသလား? (ပို့ပြီးသားဖြစ်ပါက Inventory သို့ ပစ္စည်းပြန်ဝင်ပါမည်)", async () => {
-          try { 
-            if (po.isStockDeducted && po.productId) {
-               const p = products.find(x => x.id === po.productId);
-               if(p) await db.collection(`artifacts/${APP_ID}/users/${userId}/products`).doc(po.productId).update({ quantity: Number((p.quantity + po.quantity).toFixed(3)) });
-            }
-            await db.collection(`artifacts/${APP_ID}/users/${userId}/preorders`).doc(po.id).delete(); 
-            showAlert("ဖျက်သိမ်းပြီးပါပြီ။"); 
-          } catch(e) { showAlert(e.message); }
-        });
-      };
-
-      const filteredOrders = useMemo(() => {
-        const today = new Date(); today.setHours(0,0,0,0);
-        return preorders.filter(po => {
-          const matchSearch = po.customerName.toLowerCase().includes(search.toLowerCase()) || po.productName.toLowerCase().includes(search.toLowerCase());
-          if (!matchSearch) return false;
-          const expDate = new Date(po.expectedDate); expDate.setHours(0,0,0,0);
-          if (filter === 'paid') return po.paymentStatus === 'Paid';
-          if (filter === 'unpaid') return po.paymentStatus === 'Unpaid';
-          if (filter === 'today') return expDate.getTime() === today.getTime() && po.orderStatus !== 'Completed';
-          if (filter === 'overdue') return expDate < today && po.orderStatus !== 'Completed' && po.orderStatus !== 'Sent';
-          return true;
-        }).sort((a, b) => new Date(a.expectedDate) - new Date(b.expectedDate));
-      }, [preorders, search, filter]);
-
-      const stats = useMemo(() => {
-        const today = new Date(); today.setHours(0,0,0,0);
-        return preorders.reduce((acc, po) => {
-          acc.total++;
-          if (po.orderStatus === 'Pending') acc.pending++;
-          if (po.paymentStatus === 'Paid') acc.paid++;
-          if (po.paymentStatus === 'Unpaid') acc.unpaid++;
-          const expDate = new Date(po.expectedDate); expDate.setHours(0,0,0,0);
-          if (expDate < today && po.orderStatus !== 'Completed' && po.orderStatus !== 'Sent') acc.overdue++;
-          return acc;
-        }, { total: 0, pending: 0, paid: 0, unpaid: 0, overdue: 0 });
-      }, [preorders]);
-
-      const getDateBadge = (expectedDateString, status) => {
-        if (status === 'Completed') return { color: 'bg-white/10 text-white border-white/20', icon: 'fa-check-double', text: 'Completed' };
-        const today = new Date(); today.setHours(0,0,0,0); const expDate = new Date(expectedDateString); expDate.setHours(0,0,0,0);
-        const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
-        if (diffDays < 0) return { color: 'bg-rose-500/20 text-rose-400 border-rose-500/50 animate-pulse', icon: 'fa-exclamation-triangle', text: `Overdue (${Math.abs(diffDays)}d)` };
-        if (diffDays === 0) return { color: 'bg-amber-500/20 text-amber-300 border-amber-500/50 font-black', icon: 'fa-bell', text: 'Today' };
-        if (diffDays === 1) return { color: 'bg-amber-500/10 text-amber-200 border-amber-500/30', icon: 'fa-clock', text: 'Tomorrow' };
-        return { color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40', icon: 'fa-calendar-alt', text: `In ${diffDays}d` };
-      };
-
-      if (view === 'form') {
+      if (activeView === 'form') {
         return (
-          <div className="space-y-6 animate-in fade-in zoom-in">
-            <div className="flex items-center gap-4"><button onClick={() => setView('list')} className={`${styles.neoBtn} !p-3 rounded-full`}><i className="fas fa-arrow-left"></i></button><h2 className={styles.headerText}>{form.id ? 'Pre-Order ပြင်ဆင်ရန်' : 'Pre-Order အသစ်'}</h2></div>
-            <form onSubmit={handleSave} className={`${styles.neoCard} p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6 relative`}>
-              <div className="md:col-span-2 border-b border-white/10 pb-2"><h3 className="font-bold text-cyan-300"><i className="fas fa-user"></i> ဖောက်သည်အချက်အလက်</h3></div>
-              <select required value={form.customerId} onChange={handleCustomerSelect} className={styles.neoInput}><option value="">-- Customer ရွေးပါ --</option>{customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-              <input placeholder="ဖုန်းနံပါတ်" value={form.phone} onChange={e=>setForm({...form, phone: e.target.value})} className={styles.neoInput} />
-              
-              <div className="md:col-span-2 border-b border-white/10 pb-2 pt-4"><h3 className="font-bold text-cyan-300"><i className="fas fa-box"></i> မှာယူမည့်ပစ္စည်း</h3></div>
-              <select required value={form.productId} onChange={handleProductSelect} className={styles.neoInput} disabled={form.orderStatus !== 'Pending'}><option value="">-- Inventory မှ ပစ္စည်းရွေးပါ --</option>{products.map(p => <option key={p.id} value={p.id}>{p.name} (Price: {p.price})</option>)}</select>
-              <input required type="number" step="any" min="0" placeholder="အရေအတွက်" value={form.quantity} onChange={e=>setForm({...form, quantity: e.target.value})} className={styles.neoInput} disabled={form.orderStatus !== 'Pending'} />
-              <div className="md:col-span-2"><textarea placeholder="မှတ်ချက်..." value={form.note} onChange={e=>setForm({...form, note: e.target.value})} className={`${styles.neoInput} h-20`} /></div>
-
-              <div className="md:col-span-2 border-b border-white/10 pb-2 pt-4"><h3 className="font-bold text-cyan-300"><i className="fas fa-calendar-check"></i> ငွေစာရင်း & ရက်စွဲ</h3></div>
-              <div className="space-y-2"><label className="text-xs font-bold text-cyan-100/70 ml-2">မှာယူသည့်ရက် *</label><input required type="date" value={form.orderDate} onChange={e=>setForm({...form, orderDate: e.target.value})} className={styles.neoInput} /></div>
-              <div className="space-y-2"><label className="text-xs font-bold text-cyan-100/70 ml-2">ပို့ရမည့်ရက် *</label><input required type="date" value={form.expectedDate} onChange={e=>setForm({...form, expectedDate: e.target.value})} className={styles.neoInput} /></div>
-              <div className="space-y-2"><label className="text-xs font-bold text-cyan-100/70 ml-2">Service Fee</label><input type="number" value={form.serviceFee} onChange={e=>setForm({...form, serviceFee: e.target.value})} className={styles.neoInput} /></div>
-              <div className="space-y-2"><label className="text-xs font-bold text-cyan-100/70 ml-2">ပေးသွင်းငွေ (Pay Amount)</label><input type="number" step="any" value={form.payAmount} onChange={e=>setForm({...form, payAmount: e.target.value})} className={`${styles.neoInput} bg-emerald-900/20 border-emerald-500/30 text-emerald-300`} /></div>
-              
-              <div className="md:col-span-2 bg-slate-900/50 p-5 rounded-2xl shadow-inner border border-white/5 font-bold mt-2">
-                <div className="flex justify-between text-lg text-cyan-300 mb-2"><span>စုစုပေါင်း (Grand Total):</span><span>{grandTotal.toLocaleString()} Ks</span></div>
-                <div className="flex justify-between text-cyan-100/50 text-sm mb-3"><span>ပေးပြီး:</span><span>{Number(form.payAmount||0).toLocaleString()} Ks</span></div>
-                <div className={`flex justify-between text-xl ${balance > 0 ? 'text-amber-400' : 'text-emerald-400'} pt-3 border-t border-white/10`}><span>{balance > 0 ? 'အကြွေးကျန်:' : 'အခြေအနေ:'}</span><span>{balance > 0 ? balance.toLocaleString() + ' Ks' : 'Paid'}</span></div>
-              </div>
-
-              {/* Added bottom margin to clear mobile menu */}
-              <div className="md:col-span-2 flex flex-col md:flex-row gap-4 mt-6 mb-28 md:mb-6">
-                <button type="button" onClick={() => setView('list')} className={`${styles.neoBtn} flex-1 text-white py-4 text-lg`}>မလုပ်တော့ပါ</button>
-                <button type="submit" className={`${styles.neoBtnPrimary} flex-1 py-4 text-lg`}>သိမ်းမည်</button>
-              </div>
+          <div className="space-y-6 animate-in fade-in zoom-in duration-300">
+            <div className="flex items-center gap-4">
+              <button onClick={() => setActiveView('list')} className={`${styles.neoBtn} !p-3 rounded-full`}><i className="fas fa-arrow-left text-xl"></i></button>
+              <h2 className={styles.headerText}>{form.id ? 'ဖောက်သည် အချက်အလက် ပြင်ဆင်ရန်' : 'ဖောက်သည် အသစ်ထည့်ရန်'}</h2>
+            </div>
+            <form onSubmit={handleSaveCustomer} className={`${styles.neoCard} p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 border-black`}>
+              <div className="space-y-2"><label className="text-sm font-bold text-gray-700 ml-1">အမည် (Name) *</label><input required placeholder="ဖောက်သည်အမည်" value={form.name} onChange={e=>setForm({...form, name: e.target.value})} className={styles.neoInput} /></div>
+              <div className="space-y-2"><label className="text-sm font-bold text-gray-700 ml-1">အသက် (Age)</label><input type="number" placeholder="အသက်" value={form.age} onChange={e=>setForm({...form, age: e.target.value})} className={styles.neoInput} /></div>
+              <div className="space-y-2"><label className="text-sm font-bold text-gray-700 ml-1">ကျား / မ (Gender)</label><select value={form.gender} onChange={e=>setForm({...form, gender: e.target.value})} className={styles.neoInput}><option>Male</option><option>Female</option></select></div>
+              <div className="space-y-2"><label className="text-sm font-bold text-gray-700 ml-1">ဖုန်းနံပါတ် ၁</label><input required placeholder="09xxxxxxxxx" value={form.phone1} onChange={e=>setForm({...form, phone1: e.target.value})} className={styles.neoInput} /></div>
+              <div className="space-y-2"><label className="text-sm font-bold text-gray-700 ml-1">ဖုန်းနံပါတ် ၂ (Optional)</label><input placeholder="Phone 2 (Opt)" value={form.phone2} onChange={e=>setForm({...form, phone2: e.target.value})} className={styles.neoInput} /></div>
+              <div className="space-y-2"><label className="text-sm font-bold text-gray-700 ml-1">ဖုန်းနံပါတ် ၃ (Optional)</label><input placeholder="Phone 3 (Opt)" value={form.phone3} onChange={e=>setForm({...form, phone3: e.target.value})} className={styles.neoInput} /></div>
+              <div className="md:col-span-2 space-y-2"><label className="text-sm font-bold text-gray-700 ml-1">ရောဂါ / မှတ်ချက် (Diagnosis / Remark)</label><textarea placeholder="မှတ်ချက်များ ရေးသားရန်..." value={form.diagnosis} onChange={e=>setForm({...form, diagnosis: e.target.value})} className={`${styles.neoInput} h-28`} /></div>
+              <div className="md:col-span-2 flex justify-end gap-4 mt-4"><button type="button" onClick={() => setActiveView('list')} className={`${styles.neoBtn} px-8 py-4`}>{t.cancel}</button><button type="submit" className={`${styles.neoBtnPrimary} px-10 py-4`}>{t.save}</button></div>
             </form>
           </div>
         );
       }
 
+      if (activeView === 'detail' && selectedCustomerId) {
+        const customer = customersWithData.find(c => c.id === selectedCustomerId);
+        if (!customer) { setActiveView('list'); return null; }
+        const customerSales = customer.custSales.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        return (
+          <div className="space-y-6 animate-in slide-in-from-right-8 duration-300">
+            <div className="flex items-center gap-4">
+              <button onClick={() => setActiveView('list')} className={`${styles.neoBtn} !p-3 rounded-full`}><i className="fas fa-arrow-left text-xl"></i></button>
+              <h2 className={styles.headerText}>ဖောက်သည် အသေးစိတ်မှတ်တမ်း</h2>
+            </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+              <div className="xl:col-span-5 space-y-6">
+                <div className={`${styles.neoCard} p-6 flex flex-col items-center text-center relative overflow-hidden bg-gray-50 border-gray-300`}>
+                  <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteCustomer(customer.id); }} className="absolute top-4 right-4 text-red-500 hover:text-red-700 bg-white border border-gray-200 p-3 rounded-full shadow-sm transition-colors touch-manipulation"><i className="fas fa-trash-alt"></i></button>
+                  <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openForm(customer); }} className="absolute top-4 right-16 text-blue-600 hover:text-blue-800 bg-white border border-gray-200 p-3 rounded-full shadow-sm transition-colors touch-manipulation"><i className="fas fa-edit"></i></button>
+                  
+                  <div className="w-24 h-24 bg-black rounded-full flex items-center justify-center text-white mb-4 shadow-sm"><i className="fas fa-user text-4xl"></i></div>
+                  <h3 className="text-3xl font-black text-black mb-2">{customer.name}</h3>
+                  <p className="text-sm font-bold text-gray-700 mb-4 bg-gray-200 px-4 py-1.5 rounded-full">{customer.gender} {customer.age && `| ${customer.age} နှစ်`}</p>
+                  
+                  <div className="w-full text-left space-y-3 mt-2 border-t border-gray-300 pt-5">
+                    <div className="flex items-start gap-4">
+                      <div className="bg-gray-200 p-2 rounded-lg flex-shrink-0"><i className="fas fa-phone text-black text-lg"></i></div>
+                      <div className="text-base font-bold text-black mt-1">
+                        <p>{customer.phone1 || 'ဖုန်းနံပါတ် မရှိပါ'}</p>
+                        {customer.phone2 && <p>{customer.phone2}</p>}
+                        {customer.phone3 && <p>{customer.phone3}</p>}
+                      </div>
+                    </div>
+                    {customer.diagnosis && (
+                      <div className="flex items-start gap-4 mt-4">
+                        <div className="bg-gray-200 p-2 rounded-lg flex-shrink-0"><i className="fas fa-file-alt text-black text-lg"></i></div>
+                        <p className="text-sm font-medium text-gray-800 mt-1 leading-relaxed">{customer.diagnosis}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className={`${styles.neoCard} p-6 text-center space-y-5 border-gray-300`}>
+                  <div className="grid grid-cols-2 gap-4 border-b border-gray-200 pb-5">
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                      <i className="fas fa-chart-line text-black text-2xl mx-auto mb-2"></i>
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">စုစုပေါင်း ဝယ်ယူထားမှု</p>
+                      <p className="text-xl font-black text-black mt-1">{customer.totalSpent.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                      <i className="fas fa-shopping-bag text-black text-2xl mx-auto mb-2"></i>
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">ဝယ်ယူမှု အကြိမ်</p>
+                      <p className="text-xl font-black text-black mt-1">{customer.custSales.length} ကြိမ်</p>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <p className="text-base font-bold text-gray-600 mb-2 flex items-center justify-center gap-2"><i className="fas fa-wallet text-xl"></i> လက်ရှိ အကြွေးကျန်</p>
+                    <p className={`text-5xl font-black mb-6 tracking-tight ${customer.balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {customer.balance.toLocaleString()}
+                    </p>
+
+                    {customer.balance > 0 ? (
+                      <div className="space-y-4 bg-gray-50 p-6 rounded-2xl border border-gray-300 shadow-sm">
+                        <p className="text-base font-bold text-black flex items-center justify-center gap-2 mb-2">
+                          <i className="fas fa-credit-card text-black text-xl"></i> ငွေချေရန် ပမာဏ
+                        </p>
+                        <input 
+                          type="number" 
+                          step="any"
+                          value={payAmountInput} 
+                          onChange={e => setPayAmountInput(e.target.value)} 
+                          placeholder="0" 
+                          className={`${styles.neoInput} text-center font-black text-2xl h-16 text-black border-gray-400 bg-white`} 
+                        />
+                        <button 
+                          onClick={() => handleIndividualPayment(customer.id, customer.balance)} 
+                          className={`${styles.neoBtnPrimary} w-full h-16 text-xl tracking-wide mt-2`}
+                        >
+                          ငွေချေမည် (Pay)
+                        </button>
+                        <p className="text-xs font-bold text-gray-500 leading-tight mt-3">မှတ်ချက်: အဟောင်းဆုံး ဝယ်ယူမှုအကြွေးများမှစ၍ အလိုအလျောက် အဆင့်ဆင့် ဖြတ်တောက် ရှင်းလင်းသွားပါမည်။</p>
+                      </div>
+                    ) : (
+                      <div className="bg-green-50 text-green-700 font-bold p-5 rounded-2xl border border-green-200 flex flex-col justify-center items-center gap-3">
+                        <div className="bg-green-200 p-3 rounded-full"><i className="fas fa-check text-2xl"></i></div>
+                        <span className="text-lg">အကြွေးကင်းရှင်းပါသည်</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="xl:col-span-7">
+                <div className={`${styles.neoCard} p-6 h-full flex flex-col bg-gray-50 border-gray-300`}>
+                  <div className="flex justify-between items-center border-b border-gray-300 pb-4 mb-5">
+                    <h3 className="text-2xl font-black flex items-center gap-3 text-black">
+                      <i className="fas fa-history text-gray-400"></i> ဝယ်ယူမှု မှတ်တမ်းများ 
+                    </h3>
+                  </div>
+                  
+                  <div className="flex-1 space-y-5 overflow-y-auto pr-2 custom-scrollbar" style={{maxHeight: 'calc(100vh - 200px)'}}>
+                    {customerSales.length === 0 && (
+                      <div className="flex flex-col items-center justify-center h-40 text-gray-400">
+                        <i className="fas fa-shopping-cart text-5xl mb-3"></i>
+                        <p className="font-bold text-lg">ဝယ်ယူမှု မှတ်တမ်းမရှိသေးပါ။</p>
+                      </div>
+                    )}
+                    
+                    {customerSales.map((s, index) => (
+                      <div key={s.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 hover:border-gray-300 transition-all">
+                        <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+                          <div className="flex items-center gap-3 text-sm font-bold text-gray-600">
+                            <span className="bg-black text-white px-3 py-1 rounded-md text-xs">#{customerSales.length - index}</span>
+                            <div className="flex items-center gap-1.5">
+                              <i className="fas fa-calendar-alt text-gray-400"></i>
+                              <span className="text-black bg-gray-100 px-2 py-0.5 rounded">{new Date(s.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                            </div>
+                            <span className="text-gray-300">|</span> 
+                            <span>{new Date(s.date).toLocaleTimeString('en-US', { hour: '2-digit', minute:'2-digit' })}</span>
+                          </div>
+                          <span className={`px-4 py-1.5 text-xs uppercase tracking-wider rounded-full font-black border ${s.status === 'Paid' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                            {s.status === 'Paid' ? 'ငွေချေပြီး' : 'အကြွေး'}
+                          </span>
+                        </div>
+                        
+                        <div className="space-y-3 mb-5">
+                          {s.items.map((i, idx) => (
+                            <div key={idx} className="flex justify-between items-center font-bold text-black text-base">
+                              <span className="flex items-center gap-3">
+                                <span className="w-2 h-2 bg-gray-300 rounded-full block"></span>
+                                {i.name} 
+                                <span className="text-xs font-black bg-gray-100 border border-gray-200 px-2 py-1 rounded-md ml-2 text-black">x{i.qty}</span>
+                              </span>
+                              <span>{(Math.round(i.price * i.qty)).toLocaleString()}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
+                            <div className="space-y-3">
+                              <div className="flex justify-between text-gray-600 font-bold"><span>ပစ္စည်းတန်ဖိုး:</span><span className="text-black">{s.itemsTotal.toLocaleString()}</span></div>
+                              <div className="flex justify-between text-gray-600 font-bold"><span>ဝန်ဆောင်ခ:</span><span className="text-black">{s.serviceFee || 0}</span></div>
+                              <div className="flex justify-between font-black text-black pt-3 border-t border-gray-300 text-base"><span>စုစုပေါင်း (Total):</span><span>{s.grandTotal.toLocaleString()}</span></div>
+                            </div>
+                            <div className="space-y-3 sm:border-l sm:border-gray-300 sm:pl-6 pt-4 sm:pt-0 border-t border-gray-200 sm:border-t-0">
+                              <div className="flex justify-between font-bold text-green-700"><span>ပေးချေပြီး:</span><span>{s.payAmount ? s.payAmount.toLocaleString() : 0}</span></div>
+                              <div className={`flex justify-between font-black pt-3 border-t border-gray-300 text-lg ${s.balance > 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                                <span>အကြွေးကျန်:</span><span>{s.balance.toLocaleString()}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
       return (
-        <div className="space-y-6 animate-in fade-in pb-10">
-          <div className="flex flex-col md:flex-row justify-between gap-4 items-start md:items-center"><h2 className={styles.headerText}>Pre-Order Management</h2><button onClick={()=>{ setForm(defaultForm); setView('form'); }} className={styles.neoBtnPrimary}><i className="fas fa-plus"></i> New Pre-Order</button></div>
-          
-          {/* Dashboards */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="bg-white/5 p-4 rounded-2xl border border-white/10 flex flex-col items-center justify-center"><span className="text-3xl font-black text-white">{stats.total}</span><span className="text-[10px] font-bold text-white/50 uppercase">Total Orders</span></div>
-            <div className="bg-blue-500/10 p-4 rounded-2xl border border-blue-500/20 flex flex-col items-center justify-center"><span className="text-3xl font-black text-blue-400">{stats.pending}</span><span className="text-[10px] font-bold text-blue-300/70 uppercase">Pending</span></div>
-            <div className="bg-emerald-500/10 p-4 rounded-2xl border border-emerald-500/20 flex flex-col items-center justify-center"><span className="text-3xl font-black text-emerald-400">{stats.paid}</span><span className="text-[10px] font-bold text-emerald-300/70 uppercase">Paid</span></div>
-            <div className="bg-amber-500/10 p-4 rounded-2xl border border-amber-500/20 flex flex-col items-center justify-center"><span className="text-3xl font-black text-amber-400">{stats.unpaid}</span><span className="text-[10px] font-bold text-amber-300/70 uppercase">Unpaid</span></div>
-            <div className="bg-rose-500/10 p-4 rounded-2xl border border-rose-500/20 flex flex-col items-center justify-center col-span-2 md:col-span-1"><span className="text-3xl font-black text-rose-400">{stats.overdue}</span><span className="text-[10px] font-bold text-rose-300/70 uppercase animate-pulse">Overdue</span></div>
+        <div className="space-y-6 animate-in fade-in duration-300">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <h2 className={styles.headerText}>ဖောက်သည်စာရင်း (Customers)</h2>
+            <button onClick={() => openForm()} className={`${styles.neoBtnPrimary} px-6`}><i className="fas fa-plus text-xl"></i> Customer အသစ်ထည့်ရန်</button>
           </div>
 
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1"><i className="fas fa-search absolute left-4 top-5 text-cyan-300"></i><input placeholder="Customer သို့ Product ဖြင့်ရှာရန်..." className={`${styles.neoInput} pl-12`} value={search} onChange={e=>setSearch(e.target.value)} /></div>
-            <select className={`${styles.neoInput} md:w-48 font-bold`} value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">All Orders</option><option value="paid">Paid Only</option><option value="unpaid">Unpaid Only</option><option value="today">Today's Delivery</option><option value="overdue">Overdue Alerts</option></select>
+            <div className="relative flex-1">
+              <i className="fas fa-search absolute left-4 top-5 text-gray-400 text-lg"></i>
+              <input type="text" placeholder="အမည်ဖြင့် ရှာဖွေရန်..." value={search} onChange={e=>setSearch(e.target.value)} className={`${styles.neoInput} pl-12 bg-white border-gray-300`} />
+            </div>
+            <select value={sortOrder} onChange={e=>setSortOrder(e.target.value)} className={`${styles.neoInput} md:w-56 font-bold bg-white border-gray-300`}>
+              <option value="alpha">A-Z စီရန်</option>
+              <option value="balance">အကြွေးအများဆုံး</option>
+            </select>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredOrders.length === 0 && <p className="col-span-full text-center py-12 text-white/50 font-bold">မှတ်တမ်း မရှိသေးပါ။</p>}
-            {filteredOrders.map(po => {
-              const dBadge = getDateBadge(po.expectedDate, po.orderStatus);
-              return (
-                <div key={po.id} className={`${styles.neoCard} flex flex-col`}>
-                  <div className="p-4 border-b border-white/10 flex justify-between items-start bg-white/5">
-                    <div><h3 className="font-extrabold text-lg text-cyan-100 leading-tight">{po.customerName}</h3><p className="text-[11px] font-bold text-white/50"><i className="fas fa-phone mr-1"></i> {po.phone || "-"}</p></div>
-                    <div className="flex flex-col items-end gap-1"><span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider ${po.orderStatus === 'Pending' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : po.orderStatus === 'Sent' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-white/10 text-white/80 border border-white/20'}`}>{po.orderStatus}</span><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-sm border ${dBadge.color}`}><i className={`fas ${dBadge.icon}`}></i> {dBadge.text}</span></div>
-                  </div>
-                  <div className="p-4 flex-1 space-y-3">
-                    <div className="flex justify-between items-center"><div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-cyan-400 block shadow-[0_0_8px_cyan]"></span><span className="font-bold text-white">{po.productName}</span></div><span className="bg-white/10 px-2 py-0.5 rounded text-xs font-bold border border-white/10 text-cyan-300">Qty: {po.quantity}</span></div>
-                    <div className="grid grid-cols-2 gap-2 text-xs font-bold text-white/70 bg-black/20 p-2 rounded-xl border border-white/5"><div><i className="fas fa-calendar-plus text-cyan-500 w-4"></i> Ord: {new Date(po.orderDate).toLocaleDateString('en-GB')}</div><div><i className="fas fa-truck text-emerald-400 w-4"></i> Exp: {new Date(po.expectedDate).toLocaleDateString('en-GB')}</div></div>
-                    <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/10">
-                      <div className="flex flex-col"><span className="text-[10px] uppercase font-bold text-white/50 mb-0.5">Grand Total</span><span className={`font-black ${po.balance <= 0 ? 'text-emerald-400' : 'text-amber-400'}`}>{po.grandTotal?.toLocaleString() || 0} Ks {po.balance > 0 && <span className="text-amber-300/70 block text-xs">(Bal: {po.balance.toLocaleString()})</span>}</span></div>
-                      {po.isStockDeducted && <span className="text-[9px] text-emerald-400/80 font-bold"><i className="fas fa-check-circle"></i> Stock Deducted</span>}
-                    </div>
-                  </div>
-                  <div className="p-3 border-t border-white/10 bg-black/20 flex justify-between items-center gap-2">
-                    <div className="flex gap-2"><button onClick={()=> { setForm({...po, orderDate: po.orderDate.split('T')[0], expectedDate: po.expectedDate.split('T')[0]}); setView('form'); }} className="w-9 h-9 flex items-center justify-center bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-xl hover:bg-blue-500/40"><i className="fas fa-edit text-sm"></i></button><button onClick={()=> deleteOrder(po)} className="w-9 h-9 flex items-center justify-center bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl hover:bg-rose-500/40"><i className="fas fa-trash text-sm"></i></button></div>
-                    <div className="flex gap-2">
-                      {po.orderStatus === 'Pending' && <button onClick={()=>updateOrderToSent(po)} className="px-3 py-2 bg-emerald-500/80 text-white font-bold text-xs rounded-xl hover:bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]"><i className="fas fa-paper-plane"></i> Mark Sent</button>}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      );
-    };
-
-    // ==========================================
-    // CUSTOMER TAB 
-    // ==========================================
-    const CustomerSection = ({ t, customers, sales, preorders, userId, showAlert, showConfirm }) => {
-      const [view, setView] = useState('list'); 
-      const [search, setSearch] = useState('');
-      const [sort, setSort] = useState('name');
-      const [form, setForm] = useState({ id: null, name: '', phone: '', address: '', note: '' });
-      const [selectedId, setSelectedId] = useState(null);
-      const [payAmt, setPayAmt] = useState('');
-
-      const processedCustomers = useMemo(() => {
-        return customers.map(c => {
-          const cSales = sales.filter(s => s.customerId === c.id).map(s=>({...s, type: 'Sale'}));
-          const cPreorders = preorders.filter(po => po.customerId === c.id).map(po=>({...po, type: 'Pre-Order'}));
-          const combinedHistory = [...cSales, ...cPreorders].sort((a,b)=>new Date(b.date || b.orderDate) - new Date(a.date || a.orderDate));
-          const balance = combinedHistory.reduce((sum, item) => sum + (Number(item.balance) || 0), 0);
-          const totalSpent = combinedHistory.reduce((sum, item) => sum + (Number(item.grandTotal) || 0), 0);
-          return { ...c, balance, totalSpent, count: combinedHistory.length, history: combinedHistory };
-        }).filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
-          .sort((a,b) => sort === 'name' ? a.name.localeCompare(b.name) : b.balance - a.balance);
-      }, [customers, sales, preorders, search, sort]);
-
-      const selectedCustomer = useMemo(() => processedCustomers.find(c => c.id === selectedId), [processedCustomers, selectedId]);
-
-      const handleSave = async (e) => {
-        e.preventDefault();
-        try {
-          const safeUserId = String(userId);
-          const data = { name: form.name, phone: form.phone, address: form.address, note: form.note };
-          if (form.id) await db.collection(`artifacts/${APP_ID}/users/${safeUserId}/customers`).doc(form.id).update(data);
-          else await db.collection(`artifacts/${APP_ID}/users/${safeUserId}/customers`).add(data);
-          setView('list'); setForm({ id: null, name: '', phone: '', address: '', note: '' });
-          showAlert("Customer သိမ်းဆည်းပြီးပါပြီ။");
-        } catch (err) { showAlert(err.message); }
-      };
-
-      const handlePayment = async () => {
-        const amt = parseFloat(payAmt);
-        if (isNaN(amt) || amt <= 0) return showAlert("ငွေပမာဏ မှန်ကန်စွာထည့်ပါ။");
-        if (amt > selectedCustomer.balance) return showAlert("ပေးချေငွေသည် အကြွေးထက် များနေပါသည်။");
-
-        showConfirm(`${amt.toLocaleString()} ကျပ် ငွေချေရန် သေချာပါသလား?`, async () => {
-          try {
-            const safeUserId = String(userId);
-            let remaining = amt;
-            const unpaids = selectedCustomer.history.filter(s => (s.status === 'Unpaid' || s.paymentStatus === 'Unpaid' || s.balance > 0) && s.balance > 0)
-                            .sort((a,b)=>new Date(a.date || a.orderDate) - new Date(b.date || b.orderDate));
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {sortedCustomers.length === 0 && <p className="col-span-full text-center py-12 text-gray-500 font-bold text-lg">ဖောက်သည်စာရင်း မရှိသေးပါ။</p>}
             
-            for (let item of unpaids) {
-              if (remaining <= 0) break;
-              const canPay = Math.min(remaining, item.balance);
-              const newBalance = Number((item.balance - canPay).toFixed(2));
-              const newPayAmount = Number(((item.payAmount || 0) + canPay).toFixed(2));
-              
-              if (item.type === 'Sale') {
-                 await db.collection(`artifacts/${APP_ID}/users/${safeUserId}/sales`).doc(item.id).update({
-                   balance: newBalance, payAmount: newPayAmount, status: newBalance <= 0 ? 'Paid' : 'Unpaid'
-                 });
-              } else {
-                 let orderStat = item.orderStatus;
-                 if (newBalance <= 0 && orderStat === 'Sent') orderStat = 'Completed';
-                 await db.collection(`artifacts/${APP_ID}/users/${safeUserId}/preorders`).doc(item.id).update({
-                   balance: newBalance, payAmount: newPayAmount, paymentStatus: newBalance <= 0 ? 'Paid' : 'Unpaid',
-                   orderStatus: orderStat, paymentDate: newBalance <= 0 ? new Date().toISOString() : item.paymentDate
-                 });
-              }
-              remaining -= canPay;
-            }
-            setPayAmt(''); showAlert("ငွေချေမှု အောင်မြင်ပါသည်။");
-          } catch (err) { showAlert(err.message); }
-        });
-      };
-
-      if (view === 'form') return (
-        <div className="space-y-6 animate-in fade-in zoom-in">
-          <div className="flex items-center gap-4"><button onClick={()=>setView('list')} className={`${styles.neoBtn} !p-3 rounded-full`}><i className="fas fa-arrow-left"></i></button><h2 className={styles.headerText}>{form.id ? t.edit : t.add}</h2></div>
-          <form onSubmit={handleSave} className={`${styles.neoCard} p-6 space-y-5 relative`}>
-            <div className="space-y-1"><label className="text-xs font-bold text-cyan-100/70 ml-2">ဖောက်သည်အမည် *</label><input required className={styles.neoInput} value={form.name} onChange={e=>setForm({...form, name: e.target.value})} /></div>
-            <div className="space-y-1"><label className="text-xs font-bold text-cyan-100/70 ml-2">ဖုန်းနံပါတ်</label><input className={styles.neoInput} value={form.phone} onChange={e=>setForm({...form, phone: e.target.value})} /></div>
-            <div className="space-y-1"><label className="text-xs font-bold text-cyan-100/70 ml-2">လိပ်စာ</label><input className={styles.neoInput} value={form.address} onChange={e=>setForm({...form, address: e.target.value})} /></div>
-            <div className="space-y-1"><label className="text-xs font-bold text-cyan-100/70 ml-2">မှတ်ချက်</label><textarea className={`${styles.neoInput} h-24`} value={form.note} onChange={e=>setForm({...form, note: e.target.value})} /></div>
-            <div className="flex flex-col md:flex-row gap-4 pt-4 mb-24 md:mb-6">
-              <button type="button" onClick={()=>setView('list')} className={`${styles.neoBtn} flex-1 py-4 text-lg text-white`}>{t.cancel}</button>
-              <button type="submit" className={`${styles.neoBtnPrimary} flex-1 py-4 text-lg`}>{t.save}</button>
-            </div>
-          </form>
-        </div>
-      );
-
-      if (view === 'detail' && selectedCustomer) return (
-        <div className="space-y-6 pb-10 animate-in fade-in slide-in-from-right-4">
-          <div className="flex items-center gap-4"><button onClick={()=>setView('list')} className={`${styles.neoBtn} !p-3 rounded-full`}><i className="fas fa-arrow-left"></i></button><h2 className={styles.headerText}>{selectedCustomer.name}</h2></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className={`${styles.neoCard} p-6 flex flex-col items-center text-center`}>
-              <div className="w-20 h-20 bg-cyan-500/20 rounded-full flex items-center justify-center text-cyan-300 text-3xl mb-4 font-black shadow-[0_0_15px_rgba(34,211,238,0.3)]">{selectedCustomer.name.charAt(0)}</div>
-              <p className="font-bold text-lg mb-1 text-white">{selectedCustomer.phone || "No Phone"}</p>
-              <p className="text-xs text-white/50 mb-4">{selectedCustomer.address || "No Address"}</p>
-              <div className="flex gap-2 w-full"><button onClick={()=>{ setForm(selectedCustomer); setView('form'); }} className={`${styles.neoBtn} flex-1 text-sm text-blue-300 border-blue-400/30`}><i className="fas fa-edit"></i> {t.edit}</button><button onClick={()=>showConfirm("အချက်အလက်အားလုံး ဖျက်မည် သေချာပါသလား?", async () => { await db.collection(`artifacts/${APP_ID}/users/${userId}/customers`).doc(selectedCustomer.id).delete(); setView('list'); })} className={`${styles.neoBtn} flex-1 text-rose-400 border-rose-400/30 text-sm`}><i className="fas fa-trash"></i> {t.delete}</button></div>
-            </div>
-            <div className={`${styles.neoCard} p-6 flex flex-col justify-between`}>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center"><span className="text-white/70 text-sm font-bold">ဝယ်ယူမှု (စုစုပေါင်း):</span><span className="font-black text-white">{selectedCustomer.totalSpent.toLocaleString()} Ks</span></div>
-                <div className="flex justify-between items-center"><span className="text-white/70 text-sm font-bold">အကြိမ်ရေ:</span><span className="font-black text-cyan-300">{selectedCustomer.count} ကြိမ်</span></div>
-                <div className="pt-4 border-t border-white/10"><p className="text-xs font-bold text-white/50 uppercase mb-1">စုစုပေါင်း အကြွေးကျန်</p><p className={`text-3xl font-black ${selectedCustomer.balance > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>{selectedCustomer.balance.toLocaleString()} Ks</p></div>
-              </div>
-              {selectedCustomer.balance > 0 && (
-                <div className="mt-6 flex flex-col gap-2 bg-black/20 p-4 rounded-xl border border-white/10 shadow-inner">
-                  <p className="text-xs font-bold text-cyan-100/70 mb-1">ငွေချေရန် (အဟောင်းမှစ၍ ဖြတ်မည်)</p>
-                  <div className="flex gap-2"><input type="number" placeholder="ငွေချေရန်..." className={`${styles.neoInput} !p-3 !text-sm`} value={payAmt} onChange={e=>setPayAmt(e.target.value)} /><button onClick={handlePayment} className={`${styles.neoBtnPrimary} !p-3`}><i className="fas fa-check"></i></button></div>
-                </div>
-              )}
-            </div>
-            <div className={`${styles.neoCard} md:col-span-1 p-6 h-[400px] flex flex-col`}>
-              <h3 className="font-bold border-b border-white/10 pb-3 mb-4 text-cyan-100"><i className="fas fa-history text-cyan-400"></i> ဘေလ်မှတ်တမ်းများ</h3>
-              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-2">
-                {selectedCustomer.history.length === 0 && <p className="text-white/50 text-center font-bold text-sm mt-10">ဝယ်ယူထားခြင်း မရှိသေးပါ။</p>}
-                {selectedCustomer.history.map(s => (
-                  <div key={s.id} className="p-3 bg-white/5 rounded-2xl border border-white/10 text-sm">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${s.type==='Sale'?'bg-emerald-500/20 text-emerald-300':'bg-blue-500/20 text-blue-300'}`}>{s.type}</span>
-                      <span className="font-bold text-white/80">{new Date(s.date || s.orderDate).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex justify-between font-bold mb-1 text-cyan-100"><span>Total:</span><span>{s.grandTotal.toLocaleString()}</span></div>
-                    <div className="flex justify-between text-[10px] font-bold">
-                      <span className={(s.status || s.paymentStatus) === 'Paid' ? 'text-emerald-400' : 'text-amber-400'}>{s.status || s.paymentStatus}</span>
-                      {s.balance > 0 && <span className="text-amber-300/80">Bal: {s.balance.toLocaleString()}</span>}
+            {sortedCustomers.map(c => (
+              <div key={c.id} className={`${styles.neoCard} p-6 flex flex-col justify-between hover:shadow-md transition-all duration-200 cursor-pointer group bg-white border-gray-300`} onClick={() => openDetail(c.id)}>
+                <div className="flex justify-between items-start mb-5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-black rounded-full flex items-center justify-center text-white font-black text-2xl shadow-sm">{c.name.charAt(0).toUpperCase()}</div>
+                    <div>
+                      <h3 className="font-black text-xl text-black leading-tight mb-1.5">{c.name}</h3>
+                      <p className="text-xs font-bold text-gray-600 flex items-center gap-1.5 bg-gray-100 px-2 py-1 rounded-md w-fit border border-gray-200"><i className="fas fa-phone text-[10px]"></i> {c.phone1 || '-'}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      );
+                  
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); openForm(c); }} 
+                      className="p-3 bg-gray-50 rounded-xl text-blue-600 hover:bg-gray-200 border border-gray-200 transition-colors touch-manipulation"
+                      title="ပြင်ဆင်မည်"
+                    >
+                      <i className="fas fa-edit"></i>
+                    </button>
+                    <button 
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteCustomer(c.id); }} 
+                      className="p-3 bg-red-50 rounded-xl text-red-600 hover:bg-red-100 border border-red-100 transition-colors touch-manipulation"
+                      title="ဖျက်မည်"
+                    >
+                      <i className="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
 
-      return (
-        <div className="space-y-6 animate-in fade-in pb-10">
-          <div className="flex flex-col md:flex-row justify-between gap-4"><h2 className={styles.headerText}>{t.customer} စာရင်း</h2><button onClick={()=>{ setForm({id:null,name:'',phone:'',address:'',note:''}); setView('form'); }} className={styles.neoBtnPrimary}><i className="fas fa-plus"></i> {t.add}</button></div>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1"><i className="fas fa-search absolute left-4 top-5 text-cyan-300"></i><input placeholder="နာမည်ဖြင့် ရှာဖွေရန်..." className={`${styles.neoInput} pl-12`} value={search} onChange={e=>setSearch(e.target.value)} /></div>
-            <select className={`${styles.neoInput} md:w-48 font-bold`} value={sort} onChange={e=>setSort(e.target.value)}><option value="name">A-Z စီမည်</option><option value="balance">အကြွေးအများဆုံး</option></select>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {processedCustomers.map(c => (
-              <div key={c.id} onClick={()=>{ setSelectedId(c.id); setView('detail'); }} className={`${styles.neoCard} p-6 flex flex-col justify-between hover:-translate-y-1 transition-transform cursor-pointer group`}>
-                <div className="flex justify-between items-start mb-4">
-                  <div><h3 className="text-xl font-bold text-cyan-100 group-hover:text-cyan-300 transition-colors">{c.name}</h3><p className="text-xs text-white/50 font-bold mt-1"><i className="fas fa-phone mr-1"></i> {c.phone || "-"}</p></div>
-                  <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-cyan-300"><i className="fas fa-chevron-right"></i></div>
                 </div>
-                <div className="pt-4 border-t border-white/10 flex justify-between items-end">
-                  <div><p className="text-[10px] font-bold text-white/50 uppercase mb-1">အကြွေးလက်ကျန်</p><p className={`text-2xl font-black ${c.balance > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>{c.balance.toLocaleString()}</p></div>
-                  <div className="text-right"><p className="text-[10px] font-bold text-white/50 uppercase mb-1">အားပေးမှု</p><p className="font-bold text-sm text-cyan-100">{c.totalSpent.toLocaleString()} Ks</p></div>
+                <div className="pt-5 mt-2 border-t border-gray-100 flex items-end justify-between">
+                  <div>
+                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">လက်ကျန်ငွေ</p>
+                    <p className={`text-3xl font-black tracking-tight ${c.balance > 0 ? 'text-red-600' : 'text-green-600'}`}>{c.balance > 0 ? c.balance.toLocaleString() : '0'}</p>
+                  </div>
+                  <div className="text-right flex flex-col items-end gap-2">
+                    <span className="text-xs font-bold text-black bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-200 flex items-center gap-1.5"><i className="fas fa-chart-line text-gray-400"></i>{c.totalSpent.toLocaleString()}</span>
+                    <span className="text-xs font-bold text-black bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-200 flex items-center gap-1.5"><i className="fas fa-shopping-bag text-gray-400"></i>{c.custSales.length} ကြိမ်</span>
+                  </div>
                 </div>
+                <div className="mt-6"><button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openDetail(c.id); }} className={`${styles.neoBtn} w-full text-sm font-black text-black bg-gray-50 hover:bg-gray-100 hover:border-black py-4`}><i className="fas fa-eye text-gray-500 mr-1"></i> မှတ်တမ်းကြည့်မည် / ငွေချေမည်</button></div>
               </div>
             ))}
-            {processedCustomers.length === 0 && <p className="col-span-full text-center py-20 font-bold text-white/50">ရှာဖွေမှုမှတ်တမ်း မရှိပါ။</p>}
           </div>
         </div>
       );
     };
 
     // ==========================================
-    // MAIN APP WRAPPER
+    // MAIN APP COMPONENT
     // ==========================================
     const App = () => {
       const [user, setUser] = useState(null);
       const [lang, setLang] = useState('my');
-      const [currentTab, setCurrentTab] = useState('preorder');
-      const [init, setInit] = useState(false);
+      const [currentTab, setCurrentTab] = useState('customer');
       const t = dict[lang];
 
-      const [data, setData] = useState({ products: [], sales: [], customers: [], expenses: [], preorders: [] });
-      const [dialog, setDialog] = useState({ open: false, type: 'alert', msg: '', onConfirm: null });
+      const [dialog, setDialog] = useState({ isOpen: false, type: 'alert', message: '', onConfirm: null, isProcessing: false });
 
-      const showAlert = (msg) => setDialog({ open: true, type: 'alert', msg, onConfirm: null });
-      const showConfirm = (msg, onConfirm) => setDialog({ open: true, type: 'confirm', msg, onConfirm });
+      const showAlert = (message) => setDialog({ isOpen: true, type: 'alert', message, onConfirm: null, isProcessing: false });
+      const showConfirm = (message, onConfirm) => setDialog({ isOpen: true, type: 'confirm', message, onConfirm, isProcessing: false });
+      const closeDialog = () => setDialog(prev => ({ ...prev, isOpen: false }));
 
-      useEffect(() => { auth.onAuthStateChanged(u => { setUser(u); setInit(true); }); }, []);
+      const [products, setProducts] = useState([]);
+      const [sales, setSales] = useState([]);
+      const [customers, setCustomers] = useState([]);
+      const [expenses, setExpenses] = useState([]);
 
       useEffect(() => {
-        if (!user) return;
-        const safeId = String(user.uid);
-        const unP = db.collection(`artifacts/${APP_ID}/users/${safeId}/products`).onSnapshot(s => setData(d => ({...d, products: s.docs.map(x=>({...x.data(), id: x.id}))})));
-        const unS = db.collection(`artifacts/${APP_ID}/users/${safeId}/sales`).onSnapshot(s => setData(d => ({...d, sales: s.docs.map(x=>({...x.data(), id: x.id}))})));
-        const unC = db.collection(`artifacts/${APP_ID}/users/${safeId}/customers`).onSnapshot(s => setData(d => ({...d, customers: s.docs.map(x=>({...x.data(), id: x.id}))})));
-        const unE = db.collection(`artifacts/${APP_ID}/users/${safeId}/expenses`).onSnapshot(s => setData(d => ({...d, expenses: s.docs.map(x=>({...x.data(), id: x.id}))})));
-        const unPO = db.collection(`artifacts/${APP_ID}/users/${safeId}/preorders`).onSnapshot(s => setData(d => ({...d, preorders: s.docs.map(x=>({...x.data(), id: x.id}))})));
-        return () => { unP(); unS(); unC(); unE(); unPO(); };
+        const initAuth = async () => {
+          if (typeof window.__initial_auth_token !== 'undefined' && window.__initial_auth_token) {
+            try { await auth.signInWithCustomToken(window.__initial_auth_token); } catch(e){ console.error(e); }
+          }
+        };
+        initAuth();
+        
+        const unsubscribe = auth.onAuthStateChanged((u) => {
+          setUser(u);
+          if(u && currentTab === 'system') setCurrentTab('customer');
+        });
+        return () => unsubscribe();
+      }, []);
+
+      useEffect(() => {
+        if (!user || !APP_ID) return;
+        
+        const safeUserId = String(user.uid);
+        
+        const unSubP = db.collection(`artifacts/${APP_ID}/users/${safeUserId}/products`).onSnapshot(snap => setProducts(snap.docs.map(d => ({...d.data(), id: d.id}))));
+        const unSubS = db.collection(`artifacts/${APP_ID}/users/${safeUserId}/sales`).onSnapshot(snap => setSales(snap.docs.map(d => ({...d.data(), id: d.id}))));
+        const unSubC = db.collection(`artifacts/${APP_ID}/users/${safeUserId}/customers`).onSnapshot(snap => setCustomers(snap.docs.map(d => ({...d.data(), id: d.id}))));
+        const unSubE = db.collection(`artifacts/${APP_ID}/users/${safeUserId}/expenses`).onSnapshot(snap => setExpenses(snap.docs.map(d => ({...d.data(), id: d.id}))));
+
+        return () => { unSubP(); unSubS(); unSubC(); unSubE(); };
       }, [user]);
 
-      if (!init) return <div className="h-[100dvh] flex items-center justify-center font-black text-cyan-400 drop-shadow-lg text-xl">LOADING LUNA POS...</div>;
-      if (!user) return <AuthScreen showAlert={showAlert} />;
+      const customersWithData = useMemo(() => {
+        return customers.map(c => {
+          const custSales = sales.filter(s => s.customerId === c.id);
+          const balance = custSales.reduce((sum, s) => sum + (Number(s.balance) || 0), 0);
+          const totalSpent = custSales.reduce((sum, s) => sum + (Number(s.grandTotal) || 0), 0);
+          return { ...c, balance, totalSpent, custSales };
+        });
+      }, [customers, sales]);
 
-      const tabs = [
-        { id: 'preorder', icon: 'clipboard-list' },
-        { id: 'customer', icon: 'users' },
-        { id: 'sale', icon: 'shopping-cart' },
-        { id: 'purchase', icon: 'box' },
-        { id: 'expense', icon: 'file-invoice-dollar' },
-        { id: 'report', icon: 'chart-pie' },
-        { id: 'system', icon: 'cog' }
-      ];
+      const handleAuth = async (e, isLogin, email, password) => {
+        e.preventDefault();
+        try {
+          if (isLogin) await auth.signInWithEmailAndPassword(email, password);
+          else await auth.createUserWithEmailAndPassword(email, password);
+        } catch (error) { showAlert("အကောင့်ဝင်ရာတွင် အမှားဖြစ်နေပါသည်:\n" + error.message); }
+      };
+      const handleGuestLogin = async () => {
+        try { await auth.signInAnonymously(); } catch (error) { showAlert("Guest အနေဖြင့် ဝင်ရောက်ရာတွင် အမှားဖြစ်နေပါသည်:\n" + error.message); }
+      };
 
       return (
-        <div className="flex flex-col md:flex-row h-[100dvh] w-full text-blue-50 overflow-hidden relative font-sans">
-          
-          {/* Desktop Sidebar (Glassmorphism) */}
-          <nav className="hidden md:flex flex-col w-64 bg-slate-900/60 backdrop-blur-2xl border-r border-white/10 shadow-[4px_0_24px_rgba(0,0,0,0.5)] p-6 z-40">
-            <h1 className={`${styles.headerText} mb-8 text-center`}>Luna POS</h1>
-            <div className="space-y-2">
-              {tabs.map(tab => (
-                <button key={tab.id} onClick={()=>setCurrentTab(tab.id)} className={`w-full flex items-center gap-4 p-4 rounded-2xl font-bold transition-all ${currentTab === tab.id ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 shadow-[0_0_15px_rgba(34,211,238,0.2)]' : 'text-cyan-100/60 hover:bg-white/10 hover:text-cyan-100'}`}>
-                  <i className={`fas fa-${tab.icon} w-6 text-center`}></i> {t[tab.id] || tab.id}
-                </button>
-              ))}
+        <Fragment>
+          {!user ? (
+            <AuthScreen handleAuth={handleAuth} handleGuest={handleGuestLogin} t={t} lang={lang} setLang={setLang} />
+          ) : (
+            // Full Screen App Layout
+            <div className="flex h-[100dvh] w-full font-sans overflow-hidden bg-gray-50">
+              
+              {/* Tablet/Desktop Sidebar Menu (Hide on Mobile) */}
+              <nav className="hidden md:flex flex-col w-56 lg:w-64 h-full bg-white z-40 border-r border-gray-200 p-4 lg:p-6 overflow-y-auto custom-scrollbar shadow-sm">
+                <div className="mb-8 mt-4 text-center">
+                  <h1 className="text-3xl font-black text-black">Nay N Nay<br/>POS</h1>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {[
+                    { id: 'customer', icon: "fas fa-users", label: t.customer },
+                    { id: 'sale', icon: "fas fa-shopping-cart", label: t.sale },
+                    { id: 'purchase', icon: "fas fa-home", label: t.purchase },
+                    { id: 'expense', icon: "fas fa-file-invoice-dollar", label: t.expense },
+                    { id: 'report', icon: "fas fa-chart-pie", label: t.report },
+                    { id: 'system', icon: "fas fa-cog", label: t.system },
+                  ].map(item => (
+                    <button
+                      key={item.id}
+                      onClick={() => setCurrentTab(item.id)}
+                      className={`flex items-center gap-3 lg:gap-4 p-4 rounded-xl transition-all touch-manipulation ${
+                        currentTab === item.id 
+                          ? 'bg-black text-white shadow-md' 
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-black'
+                      }`}
+                    >
+                      <i className={`${item.icon} text-xl w-6 text-center`}></i>
+                      <span className="text-sm font-bold">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </nav>
+
+              {/* Main Content Area (Scrollable properly) */}
+              <main className="flex-1 h-full overflow-y-auto custom-scrollbar relative bg-gray-50 pb-[100px] md:pb-0" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 90px)' }}>
+                <div className="p-4 md:p-6 lg:p-8 w-full max-w-7xl mx-auto min-h-full">
+                  {currentTab === 'system' && <SystemTab user={user} t={t} lang={lang} setLang={setLang} />}
+                  {currentTab === 'purchase' && <PurchaseTab t={t} products={products} userId={user.uid} showAlert={showAlert} showConfirm={showConfirm} />}
+                  {currentTab === 'sale' && <SaleTab t={t} products={products} customersWithData={customersWithData} sales={sales} userId={user.uid} showAlert={showAlert} showConfirm={showConfirm} />}
+                  {currentTab === 'customer' && <CustomerTab t={t} customersWithData={customersWithData} sales={sales} userId={user.uid} showAlert={showAlert} showConfirm={showConfirm} />}
+                  {currentTab === 'expense' && <ExpenseTab t={t} expenses={expenses} userId={user.uid} showAlert={showAlert} showConfirm={showConfirm} />}
+                  {currentTab === 'report' && <ReportTab t={t} products={products} sales={sales} expenses={expenses} />}
+                </div>
+              </main>
+
+              {/* Mobile Bottom Menu (Hide on Tablet/Desktop) */}
+              <nav className="md:hidden fixed bottom-0 left-0 w-full bg-white z-50 flex justify-around p-2 border-t border-gray-200 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.5rem)' }}>
+                {[
+                  { id: 'customer', icon: "fas fa-users", label: t.customer },
+                  { id: 'sale', icon: "fas fa-shopping-cart", label: t.sale },
+                  { id: 'purchase', icon: "fas fa-home", label: t.purchase },
+                  { id: 'expense', icon: "fas fa-file-invoice-dollar", label: t.expense },
+                  { id: 'report', icon: "fas fa-chart-pie", label: t.report },
+                  { id: 'system', icon: "fas fa-cog", label: t.system },
+                ].map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => setCurrentTab(item.id)}
+                    className={`flex flex-col items-center justify-center gap-1.5 p-2 flex-1 rounded-xl transition-all touch-manipulation min-h-[60px] ${
+                      currentTab === item.id 
+                        ? 'text-black bg-gray-100 font-bold' 
+                        : 'text-gray-400 font-medium'
+                    }`}
+                  >
+                    <i className={`${item.icon} text-xl mb-0.5`}></i>
+                    <span className="text-[10px] leading-none">{item.label}</span>
+                  </button>
+                ))}
+              </nav>
+
             </div>
-          </nav>
+          )}
 
-          {/* Main Content Area */}
-          <main className="flex-1 h-full overflow-y-auto custom-scrollbar content-area">
-            <div className="p-4 md:p-8 w-full max-w-7xl mx-auto h-full">
-              {currentTab === 'preorder' && <PreOrderTab products={data.products} customers={data.customers} preorders={data.preorders} userId={user.uid} showAlert={showAlert} showConfirm={showConfirm} />}
-              {currentTab === 'customer' && <CustomerSection t={t} customers={data.customers} sales={data.sales} preorders={data.preorders} userId={user.uid} showAlert={showAlert} showConfirm={showConfirm} />}
-              {currentTab === 'sale' && <SaleTab products={data.products} customersWithData={data.customers} sales={data.sales} userId={user.uid} showAlert={showAlert} showConfirm={showConfirm} />}
-              {currentTab === 'purchase' && <PurchaseTab products={data.products} userId={user.uid} showAlert={showAlert} showConfirm={showConfirm} />}
-              {currentTab === 'expense' && <ExpenseTab expenses={data.expenses} userId={user.uid} showAlert={showAlert} showConfirm={showConfirm} />}
-              {currentTab === 'report' && <ReportTab products={data.products} sales={data.sales} preorders={data.preorders} expenses={data.expenses} />}
-              {currentTab === 'system' && <SystemTab user={user} showAlert={showAlert} />}
-            </div>
-          </main>
-
-          {/* Mobile Bottom Navigation (Glassmorphism) */}
-          <nav className="md:hidden fixed bottom-0 left-0 w-full h-[75px] bg-slate-900/80 backdrop-blur-2xl flex overflow-x-auto custom-scrollbar border-t border-white/10 shadow-[0_-8px_24px_rgba(0,0,0,0.5)] z-50">
-            {tabs.map(tab => (
-              <button key={tab.id} onClick={()=>setCurrentTab(tab.id)} className={`flex flex-col items-center justify-center min-w-[75px] h-full flex-1 transition-all ${currentTab === tab.id ? 'text-cyan-300 bg-white/10 rounded-t-xl border-t-2 border-cyan-400' : 'text-cyan-100/50 hover:bg-white/5'}`}>
-                <i className={`fas fa-${tab.icon} text-lg mb-1`}></i>
-                <span className="text-[9px] font-bold">{t[tab.id] || tab.id}</span>
-              </button>
-            ))}
-          </nav>
-
-          {/* Global Dialog Modal (Glassmorphism) */}
-          {dialog.open && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-6 animate-in fade-in">
-              <div className={`${styles.neoCard} p-8 max-w-sm w-full text-center shadow-[0_0_40px_rgba(0,0,0,0.8)] border border-white/20`}>
-                <i className={`fas ${dialog.type==='confirm'?'fa-question-circle text-amber-400':'fa-info-circle text-cyan-400'} text-5xl mb-4 drop-shadow-md`}></i>
-                <p className="font-bold text-white mb-8 whitespace-pre-wrap leading-relaxed">{dialog.msg}</p>
-                <div className="flex gap-4">
-                  {dialog.type === 'confirm' && <button onClick={()=>setDialog({...dialog, open:false})} className={`${styles.neoBtn} flex-1 text-white`}>ငြင်းမည်</button>}
-                  <button onClick={async ()=>{ if(dialog.onConfirm) await dialog.onConfirm(); setDialog({...dialog, open:false}); }} className={`${styles.neoBtnPrimary} flex-1`}>အိုကေ</button>
+          {/* Global Dialog Modal */}
+          {dialog.isOpen && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+              <div className={`${styles.neoCard} p-8 max-w-sm w-full relative flex flex-col items-center text-center shadow-2xl`}>
+                <i className={`fas ${dialog.type === 'confirm' ? 'fa-exclamation-triangle text-orange-500' : 'fa-info-circle text-blue-500'} text-6xl mb-5`}></i>
+                <h3 className="text-2xl font-black mb-3 text-black">
+                  {dialog.type === 'confirm' ? 'သေချာပါသလား?' : 'အသိပေးချက်'}
+                </h3>
+                <p className="mb-8 font-medium text-gray-600 text-base whitespace-pre-wrap">{dialog.message}</p>
+                <div className="flex gap-4 w-full">
+                  {dialog.type === 'confirm' && (
+                    <button disabled={dialog.isProcessing} onClick={closeDialog} className={`${styles.neoBtn} flex-1 text-gray-600 border-gray-300 py-4`}>
+                      မလုပ်တော့ပါ
+                    </button>
+                  )}
+                  <button
+                    disabled={dialog.isProcessing}
+                    onClick={async () => {
+                      if (dialog.type === 'confirm' && dialog.onConfirm) {
+                        setDialog(prev => ({ ...prev, isProcessing: true }));
+                        try { await dialog.onConfirm(); } catch (e) { setDialog(prev => ({ ...prev, isProcessing: false })); }
+                      } else { closeDialog(); }
+                    }}
+                    className={`${styles.neoBtnPrimary} flex-1 flex justify-center items-center gap-2 py-4 text-lg`}
+                  >
+                    {dialog.isProcessing && <i className="fas fa-spinner fa-spin"></i>}
+                    {dialog.isProcessing ? 'ခဏစောင့်ပါ...' : (dialog.type === 'confirm' ? 'သေချာပါတယ်' : 'အိုကေ')}
+                  </button>
                 </div>
               </div>
             </div>
           )}
-        </div>
+        </Fragment>
       );
-    };
+    }
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
+    const root = ReactDOM.createRoot(document.getElementById('root'))
     root.render(<App />);
   </script>
 </body>
 </html>
-
 
