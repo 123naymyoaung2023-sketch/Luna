@@ -165,7 +165,7 @@
       const [form, setForm] = useState({ id: null, name: '', cost: '', price: '', qty: '', expDate: '' });
 
       const sortedProducts = useMemo(() => {
-        return [...products].filter(p => (p.name || '').toLowerCase().includes(search.toLowerCase())).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        return [...products].filter(p => (p.name || '').toLowerCase().includes(search.toLowerCase())).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'my'));
       }, [products, search]);
 
       const handleSubmit = async (e) => {
@@ -248,7 +248,6 @@
 
     const ExpenseTab = ({ t, expenses, userId, showAlert, showConfirm }) => {
       const [showForm, setShowForm] = useState(false);
-      // deductTarget: 'none', 'profit', 'service_fee'
       const [form, setForm] = useState({ id: null, name: '', amount: '', deductTarget: 'profit' });
 
       const handleSubmit = async (e) => {
@@ -258,7 +257,6 @@
             name: form.name, 
             amount: Number(form.amount), 
             deductTarget: form.deductTarget, 
-            // Backward compatibility field
             deductProfit: form.deductTarget === 'profit', 
             date: new Date().toISOString() 
           };
@@ -471,6 +469,7 @@
       };
 
       const [cart, setCart] = useState([]);
+      const [productSearch, setProductSearch] = useState(''); // NEW Search State
       const [selectedProduct, setSelectedProduct] = useState('');
       const [qty, setQty] = useState('1'); 
       const [customerId, setCustomerId] = useState('');
@@ -483,6 +482,13 @@
       const payAmount = Number(payAmountInput || 0); 
       const balance = grandTotal - payAmount;
       const isPaid = balance <= 0 && grandTotal > 0;
+
+      // Automatically sort and filter products alphabetically based on search input
+      const filteredProducts = useMemo(() => {
+        return [...products]
+          .filter(p => (p.name || '').toLowerCase().includes(productSearch.toLowerCase()))
+          .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'my'));
+      }, [products, productSearch]);
 
       const addToCart = () => {
         const p = products.find(x => x.id === selectedProduct);
@@ -500,7 +506,11 @@
         } else {
           setCart([...cart, { productId: p.id, name: p.name, price: p.price, cost: p.cost, qty: quantityToAdd }]);
         }
-        setQty('1'); setSelectedProduct('');
+        
+        // Reset Inputs after adding
+        setQty('1'); 
+        setSelectedProduct('');
+        setProductSearch(''); 
       };
 
       const removeCart = (idx) => setCart(cart.filter((_, i) => i !== idx));
@@ -599,14 +609,31 @@
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-600 ml-1">ပစ္စည်း ထည့်သွင်းရန်</label>
                   <div className="flex flex-col gap-3">
+                    
+                    {/* New Search Input */}
+                    <div className="relative">
+                      <i className="fas fa-search absolute left-4 top-3.5 text-gray-400"></i>
+                      <input
+                        type="text"
+                        placeholder="ပစ္စည်းအမည်ဖြင့် ရှာဖွေစစ်ထုတ်ရန်..."
+                        value={productSearch}
+                        onChange={e => {
+                          setProductSearch(e.target.value);
+                          setSelectedProduct(''); // Reset selection when searching to avoid errors
+                        }}
+                        className={`${styles.neoInput} pl-11 !py-3 text-sm bg-white border-gray-300 shadow-sm`}
+                      />
+                    </div>
+
                     <div className="flex gap-2 h-14">
-                      <select value={selectedProduct} onChange={e=>setSelectedProduct(e.target.value)} className={`${styles.neoInput} flex-1 !p-3`}>
+                      <select value={selectedProduct} onChange={e=>setSelectedProduct(e.target.value)} className={`${styles.neoInput} flex-1 !p-3 text-sm`}>
                         <option value="">-- ပစ္စည်းရွေးပါ --</option>
-                        {products.map(p => <option key={p.id} value={p.id} disabled={p.quantity<=0}>{p.name} (လက်ကျန်: {Number(p.quantity)}) - {p.price}Ks</option>)}
+                        {filteredProducts.map(p => <option key={p.id} value={p.id} disabled={p.quantity<=0}>{p.name} (လက်ကျန်: {Number(p.quantity)}) - {p.price}Ks</option>)}
                       </select>
                       <input type="number" step="any" min="0.001" value={qty} onChange={e=>setQty(e.target.value)} placeholder="အရေအတွက်" className={`${styles.neoInput} w-24 text-center px-1 font-bold text-black !p-3`} />
                       <button onClick={addToCart} className={`${styles.neoBtnPrimary} px-6 h-full`}><i className="fas fa-plus text-xl"></i></button>
                     </div>
+
                     {/* Fraction Shortcut Buttons */}
                     <div className="flex flex-wrap gap-2 mt-2">
                       <button onClick={()=>setQty('0.5')} className="text-sm font-bold bg-white text-black px-4 py-2 rounded-xl border-2 border-gray-200 hover:bg-gray-100 active:scale-95 transition-transform touch-manipulation">၁/၂</button>
