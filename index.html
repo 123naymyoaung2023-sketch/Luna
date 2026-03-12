@@ -469,7 +469,8 @@
       };
 
       const [cart, setCart] = useState([]);
-      const [productSearch, setProductSearch] = useState(''); // NEW Search State
+      const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+      const [productSearch, setProductSearch] = useState(''); 
       const [selectedProduct, setSelectedProduct] = useState('');
       const [qty, setQty] = useState('1'); 
       const [customerId, setCustomerId] = useState('');
@@ -492,7 +493,7 @@
 
       const addToCart = () => {
         const p = products.find(x => x.id === selectedProduct);
-        if (!p) return;
+        if (!p) return showAlert('ကျေးဇူးပြု၍ ပစ္စည်းကို ရွေးချယ်ပါ။');
         
         const quantityToAdd = parseFloat(qty);
         if (isNaN(quantityToAdd) || quantityToAdd <= 0) return showAlert('အရေအတွက် မှန်ကန်စွာ ထည့်ပါ။');
@@ -610,27 +611,76 @@
                   <label className="text-sm font-bold text-gray-600 ml-1">ပစ္စည်း ထည့်သွင်းရန်</label>
                   <div className="flex flex-col gap-3">
                     
-                    {/* New Search Input */}
-                    <div className="relative">
-                      <i className="fas fa-search absolute left-4 top-3.5 text-gray-400"></i>
-                      <input
-                        type="text"
-                        placeholder="ပစ္စည်းအမည်ဖြင့် ရှာဖွေစစ်ထုတ်ရန်..."
-                        value={productSearch}
-                        onChange={e => {
-                          setProductSearch(e.target.value);
-                          setSelectedProduct(''); // Reset selection when searching to avoid errors
-                        }}
-                        className={`${styles.neoInput} pl-11 !py-3 text-sm bg-white border-gray-300 shadow-sm`}
-                      />
-                    </div>
+                    <div className="flex gap-2 h-14 relative z-20">
+                      
+                      {/* Searchable Custom Dropdown */}
+                      <div className="relative flex-1 h-full">
+                        <div 
+                          className={`${styles.neoInput} w-full h-full flex items-center justify-between cursor-pointer !p-3 text-sm bg-white border-gray-300 shadow-sm`}
+                          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        >
+                          <span className="truncate pr-2 font-bold text-black">
+                            {selectedProduct 
+                              ? (() => {
+                                  const p = products.find(x => x.id === selectedProduct);
+                                  return p ? `${p.name} (${p.price}Ks)` : '-- ပစ္စည်းရွေးပါ --';
+                                })()
+                              : '-- ပစ္စည်းရွေးပါ --'
+                            }
+                          </span>
+                          <i className={`fas fa-chevron-${isDropdownOpen ? 'up' : 'down'} text-gray-400`}></i>
+                        </div>
 
-                    <div className="flex gap-2 h-14">
-                      <select value={selectedProduct} onChange={e=>setSelectedProduct(e.target.value)} className={`${styles.neoInput} flex-1 !p-3 text-sm`}>
-                        <option value="">-- ပစ္စည်းရွေးပါ --</option>
-                        {filteredProducts.map(p => <option key={p.id} value={p.id} disabled={p.quantity<=0}>{p.name} (လက်ကျန်: {Number(p.quantity)}) - {p.price}Ks</option>)}
-                      </select>
-                      <input type="number" step="any" min="0.001" value={qty} onChange={e=>setQty(e.target.value)} placeholder="အရေအတွက်" className={`${styles.neoInput} w-24 text-center px-1 font-bold text-black !p-3`} />
+                        {isDropdownOpen && (
+                          <Fragment>
+                            {/* Overlay to close dropdown when clicking outside */}
+                            <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)}></div>
+                            
+                            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-xl shadow-xl flex flex-col overflow-hidden" style={{ maxHeight: '300px' }}>
+                              
+                              {/* Integrated Search Bar inside Dropdown */}
+                              <div className="p-3 border-b border-gray-200 bg-gray-50">
+                                <div className="relative">
+                                  <i className="fas fa-search absolute left-3 top-3.5 text-gray-400 text-sm"></i>
+                                  <input
+                                    autoFocus
+                                    type="text"
+                                    placeholder="ပစ္စည်းအမည် ရှာဖွေရန်..."
+                                    value={productSearch}
+                                    onChange={e => setProductSearch(e.target.value)}
+                                    className="w-full bg-white rounded-lg border border-gray-300 py-3 pl-9 pr-3 text-sm font-bold text-black focus:outline-none focus:border-black shadow-sm"
+                                  />
+                                </div>
+                              </div>
+                              
+                              {/* Filtered Product List */}
+                              <div className="overflow-y-auto flex-1 custom-scrollbar bg-white">
+                                {filteredProducts.length === 0 && <p className="p-4 text-center text-sm font-bold text-gray-400">ပစ္စည်းမတွေ့ပါ</p>}
+                                {filteredProducts.map(p => (
+                                  <div 
+                                    key={p.id}
+                                    onClick={() => {
+                                      if(p.quantity <= 0) return;
+                                      setSelectedProduct(p.id);
+                                      setIsDropdownOpen(false);
+                                      setProductSearch('');
+                                    }}
+                                    className={`p-3 border-b border-gray-100 last:border-0 transition-colors ${p.quantity <= 0 ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'cursor-pointer hover:bg-gray-100 active:bg-gray-200'}`}
+                                  >
+                                    <div className="font-bold text-black text-base">{p.name}</div>
+                                    <div className="flex justify-between items-center mt-1">
+                                      <span className="text-xs font-bold text-gray-500">လက်ကျန်: <span className={p.quantity <= 0 ? 'text-red-500' : 'text-black'}>{Number(p.quantity)}</span></span>
+                                      <span className="text-xs font-black text-blue-600">{p.price} Ks</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </Fragment>
+                        )}
+                      </div>
+
+                      <input type="number" step="any" min="0.001" value={qty} onChange={e=>setQty(e.target.value)} placeholder="အရေအတွက်" className={`${styles.neoInput} w-24 text-center px-1 font-bold text-black !p-3 h-full`} />
                       <button onClick={addToCart} className={`${styles.neoBtnPrimary} px-6 h-full`}><i className="fas fa-plus text-xl"></i></button>
                     </div>
 
